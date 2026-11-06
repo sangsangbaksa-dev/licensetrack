@@ -1,0 +1,388 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>licensetrack · 자격·면허 갱신과 보수교육 트래커</title>
+  <meta name="description" content="자격증·면허의 갱신 기한과 보수교육 학점을 한 화면에서 관리하세요. 달력 알림 파일, 학점 페이스 계산, JSON 백업을 지원합니다. 데이터는 이 브라우저에만 저장됩니다.">
+  <meta name="theme-color" content="#1D4ED8">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="ko_KR">
+  <meta property="og:title" content="licensetrack · 자격·면허 갱신과 보수교육 트래커">
+  <meta property="og:description" content="만료일, 학점 페이스, 달력 알림을 한곳에서. 데이터는 이 브라우저에만 저장됩니다.">
+  <meta property="og:image" content="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%231D4ED8'/%3E%3Cpath d='M18 33l8 8 20-22' stroke='white' stroke-width='6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231D4ED8'/%3E%3Cpath d='M9 17l4 4 10-11' stroke='white' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip" href="#app">본문으로 바로가기</a>
+
+  <header class="topbar">
+    <div class="wrap topbar-inner">
+      <a class="brand" href="#top" aria-label="licensetrack 홈">
+        <svg width="28" height="28" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="var(--accent)"/><path d="M9 17l4 4 10-11" stroke="var(--on-accent)" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span>licensetrack</span>
+      </a>
+      <nav class="topnav" aria-label="페이지 안내">
+        <a href="#features">기능</a>
+        <a href="#how">사용 순서</a>
+        <a href="#faq">자주 묻는 질문</a>
+      </nav>
+      <a class="btn btn-primary btn-sm" href="#app">지금 시작하기</a>
+    </div>
+  </header>
+
+  <main id="top">
+    <section class="hero">
+      <div class="wrap">
+        <p class="eyebrow">자격·면허 갱신 &amp; 보수교육 트래커</p>
+        <h1>갱신 기한과 보수교육 학점,<br>놓치기 전에 보이게</h1>
+        <p class="lead">여러 개의 자격을 가진 분을 위해 만들었습니다. 만료일과 주기, 이수 학점을 기록하면 남은 기간과 필요한 페이스를 계산하고, 달력에 넣을 알림 파일을 만들어 드립니다. 데이터는 이 브라우저에만 저장됩니다.</p>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="#app">내 자격 등록하기</a>
+          <a class="btn btn-ghost" href="#how">어떻게 쓰나요?</a>
+        </div>
+        <p class="fineprint">예시 템플릿의 주기와 시간은 참고용입니다. 반드시 발급 기관과 최신 법령에서 확인하세요.</p>
+      </div>
+    </section>
+
+    <section id="features" class="section">
+      <div class="wrap">
+        <h2>기한을 놓치면 벌금, 면허 정지, 소득 손실이 생깁니다</h2>
+        <p class="section-sub">흩어진 수료증과 달력 메모 대신, 하나의 기록과 하나의 화면으로 관리하세요.</p>
+        <div class="feature-grid">
+          <article class="card feature">
+            <h3>만료일과 갱신 주기</h3>
+            <p>만료일을 직접 입력하거나 발급일과 주기(년)만 넣으면 됩니다. 주기 기간과 다음 마감을 자동으로 계산합니다.</p>
+          </article>
+          <article class="card feature">
+            <h3>학점 페이스와 예상 부족</h3>
+            <p>이수 진행률, 남은 기간의 월 필요량, 지금 속도로 가면 얼마나 부족할지 보여 줍니다.</p>
+          </article>
+          <article class="card feature">
+            <h3>달력 알림 파일</h3>
+            <p>180·90·30·7일 전 알림을 담은 .ics 파일을 받아 휴대폰이나 PC 달력에 넣을 수 있습니다.</p>
+          </article>
+          <article class="card feature">
+            <h3>백업, CSV, 인쇄</h3>
+            <p>JSON 백업으로 기기를 옮기고, 학점 기록은 CSV로 내보내며, 요약표는 인쇄하거나 PDF로 저장합니다.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="how" class="section section-alt">
+      <div class="wrap">
+        <h2>사용 순서 3단계</h2>
+        <ol class="steps">
+          <li class="card step"><span class="step-no" aria-hidden="true">1</span><div><h3>자격 등록</h3><p>예시 템플릿을 고른 뒤 자격명, 발급 기관, 만료일 또는 주기, 필요 학점을 입력합니다.</p></div></li>
+          <li class="card step"><span class="step-no" aria-hidden="true">2</span><div><h3>이수 기록</h3><p>교육을 들을 때마다 날짜, 시간, 과정명과 인증서 메모를 남깁니다.</p></div></li>
+          <li class="card step"><span class="step-no" aria-hidden="true">3</span><div><h3>알림 설정</h3><p>알림 기간을 정하고 .ics 파일을 달력 앱에 가져옵니다. 앱을 열면 기한 임박 항목을 상단에 알려 줍니다.</p></div></li>
+        </ol>
+      </div>
+    </section>
+
+    <section id="app" class="section app-section" aria-labelledby="app-title">
+      <div class="wrap">
+        <div class="app-head">
+          <h2 id="app-title">내 자격 관리</h2>
+          <p class="muted">모든 데이터는 이 브라우저의 저장소에만 있습니다. 기기를 옮기기 전에 JSON 백업을 받아 두세요.</p>
+        </div>
+
+        <div class="tabs" role="tablist" aria-label="기능 선택">
+          <button role="tab" id="tab-dashboard" data-tab="dashboard" aria-selected="true" aria-controls="panel-dashboard" tabindex="0">대시보드</button>
+          <button role="tab" id="tab-items" data-tab="items" aria-selected="false" aria-controls="panel-items" tabindex="-1">자격 관리</button>
+          <button role="tab" id="tab-credits" data-tab="credits" aria-selected="false" aria-controls="panel-credits" tabindex="-1">학점 기록</button>
+          <button role="tab" id="tab-alerts" data-tab="alerts" aria-selected="false" aria-controls="panel-alerts" tabindex="-1">알림·달력</button>
+          <button role="tab" id="tab-backup" data-tab="backup" aria-selected="false" aria-controls="panel-backup" tabindex="-1">백업·인쇄</button>
+          <button role="tab" id="tab-ai" data-tab="ai" aria-selected="false" aria-controls="panel-ai" tabindex="-1">AI 계획 (선택)</button>
+        </div>
+
+        <!-- 대시보드 -->
+        <section id="panel-dashboard" class="panel" role="tabpanel" aria-labelledby="tab-dashboard">
+          <p class="muted" id="today-label"></p>
+          <div id="alert-banner" class="alert" role="status" hidden></div>
+          <ul class="counts" id="counts" aria-label="상태별 개수"></ul>
+          <div id="item-list" class="cards"></div>
+          <div id="empty-dashboard" class="empty card" hidden>
+            <h3>아직 등록된 자격이 없습니다</h3>
+            <p>예시 템플릿으로 시작하거나 직접 입력해 보세요.</p>
+            <button class="btn btn-primary" type="button" data-goto="items">자격 등록하러 가기</button>
+          </div>
+          <details class="card rules">
+            <summary>계산 규칙과 기준</summary>
+            <ul class="bullets" id="rules"></ul>
+          </details>
+          <h3 class="sub-head">마감 타임라인 (365일 이내)</h3>
+          <ol id="timeline" class="timeline"></ol>
+          <p id="timeline-empty" class="muted" hidden>365일 이내 마감이 없습니다.</p>
+          <p class="disclaimer">이 화면은 입력한 값으로 계산한 참고 자료이며 법률, 세무, 재무 자문이 아닙니다. 실제 기한과 요건은 발급 기관에서 확인하세요.</p>
+        </section>
+
+        <!-- 자격 관리 -->
+        <section id="panel-items" class="panel" role="tabpanel" aria-labelledby="tab-items" hidden>
+          <form id="item-form" class="card form" novalidate>
+            <h3 id="item-form-title">새 자격 추가</h3>
+            <div class="field">
+              <label for="tpl">예시 템플릿</label>
+              <select id="tpl"></select>
+              <p class="hint">선택하면 자격명·기관·주기·필요 학점 칸을 예시 값으로 채웁니다. 모든 값은 수정 가능하며 기관 기준으로 반드시 확인하세요.</p>
+            </div>
+            <input type="hidden" id="item-id">
+            <div class="grid-2">
+              <div class="field">
+                <label for="f-name">자격명 <span class="req">필수</span></label>
+                <input id="f-name" name="name" maxlength="100" autocomplete="off" required>
+              </div>
+              <div class="field">
+                <label for="f-issuer">발급 기관</label>
+                <input id="f-issuer" name="issuer" maxlength="100" autocomplete="off">
+              </div>
+              <div class="field">
+                <label for="f-number">자격 번호 (선택)</label>
+                <input id="f-number" name="number" maxlength="50" autocomplete="off">
+                <p class="hint">달력 파일과 AI 기능에는 포함되지 않습니다.</p>
+              </div>
+              <div class="field">
+                <label for="f-issued">발급일</label>
+                <input id="f-issued" name="issuedOn" type="date">
+              </div>
+              <div class="field">
+                <label for="f-expires">만료일</label>
+                <input id="f-expires" name="expiresOn" type="date">
+                <p class="hint">만료일을 모르면 발급일과 갱신 주기를 입력하세요.</p>
+              </div>
+              <div class="field">
+                <label for="f-cycle">갱신 주기 (년)</label>
+                <input id="f-cycle" name="cycleYears" type="number" min="0" max="50" step="1" inputmode="numeric">
+                <p class="hint">0 또는 빈 칸이면 주기 없음.</p>
+              </div>
+              <div class="field">
+                <label for="f-required">주기당 필요 학점·시간</label>
+                <input id="f-required" name="requiredCredits" type="text" inputmode="decimal" placeholder="예: 8">
+                <p class="hint">비워 두면 학점 기준을 계산하지 않습니다.</p>
+              </div>
+              <div class="field">
+                <label for="f-carry">이월 학점 (이번 주기에 인정)</label>
+                <input id="f-carry" name="carryover" type="text" inputmode="decimal" placeholder="0">
+                <p class="hint">이전 주기에서 인정되는 학점을 직접 입력합니다. 이월 가능 여부는 기관 규정을 확인하세요.</p>
+              </div>
+            </div>
+            <div class="field">
+              <label for="f-notes">메모</label>
+              <textarea id="f-notes" name="notes" rows="2" maxlength="1000"></textarea>
+            </div>
+            <p class="form-error" id="item-error" role="alert" hidden></p>
+            <div class="actions">
+              <button class="btn btn-primary" type="submit" id="item-save">저장</button>
+              <button class="btn btn-ghost" type="button" id="item-cancel" hidden>수정 취소</button>
+            </div>
+          </form>
+          <h3 class="sub-head">등록된 자격</h3>
+          <ul id="item-admin" class="stack-list"></ul>
+        </section>
+
+        <!-- 학점 기록 -->
+        <section id="panel-credits" class="panel" role="tabpanel" aria-labelledby="tab-credits" hidden>
+          <div class="field">
+            <label for="credit-item">자격 선택</label>
+            <select id="credit-item"></select>
+          </div>
+          <div id="cycle-info" class="card cycle-info"></div>
+          <form id="credit-form" class="card form" novalidate>
+            <h3>이수 기록 추가</h3>
+            <div class="grid-2">
+              <div class="field">
+                <label for="c-date">이수일 <span class="req">필수</span></label>
+                <input id="c-date" type="date" required>
+              </div>
+              <div class="field">
+                <label for="c-hours">이수 시간 (학점) <span class="req">필수</span></label>
+                <input id="c-hours" type="text" inputmode="decimal" placeholder="예: 2.5">
+              </div>
+              <div class="field">
+                <label for="c-course">과정명</label>
+                <input id="c-course" maxlength="200" autocomplete="off">
+              </div>
+              <div class="field">
+                <label for="c-provider">제공 기관</label>
+                <input id="c-provider" maxlength="100" autocomplete="off">
+              </div>
+              <div class="field">
+                <label for="c-category">분류</label>
+                <input id="c-category" maxlength="40" list="cat-list" placeholder="예: 법정, 윤리, 직무">
+                <datalist id="cat-list"><option value="법정"></option><option value="윤리"></option><option value="직무"></option><option value="실무"></option></datalist>
+              </div>
+              <div class="field">
+                <label for="c-memo">인증서 메모</label>
+                <input id="c-memo" maxlength="500" autocomplete="off" placeholder="예: 인증서 원본 서랍 2번">
+              </div>
+            </div>
+            <p class="form-error" id="credit-error" role="alert" hidden></p>
+            <div class="actions"><button class="btn btn-primary" type="submit">기록 추가</button></div>
+          </form>
+          <h3 class="sub-head">기록 목록</h3>
+          <ul id="credit-list" class="stack-list"></ul>
+          <p id="credit-empty" class="muted" hidden>아직 기록이 없습니다.</p>
+          <div class="actions"><button class="btn btn-secondary" type="button" id="csv-btn">학점 기록 CSV 저장 (전체)</button></div>
+        </section>
+
+        <!-- 알림 -->
+        <section id="panel-alerts" class="panel" role="tabpanel" aria-labelledby="tab-alerts" hidden>
+          <form id="lead-form" class="card form" novalidate>
+            <h3>알림 기간</h3>
+            <div class="field">
+              <label for="leads">마감 며칠 전에 알릴까요? (쉼표로 구분)</label>
+              <input id="leads" inputmode="numeric" autocomplete="off" placeholder="180, 90, 30, 7">
+              <p class="hint">1~730 사이 정수, 최대 8개. 기본값은 180, 90, 30, 7 입니다.</p>
+            </div>
+            <p class="form-error" id="lead-error" role="alert" hidden></p>
+            <div class="actions"><button class="btn btn-primary" type="submit">알림 기간 저장</button></div>
+          </form>
+
+          <div class="card form">
+            <h3>달력 파일 (.ics)</h3>
+            <p>각 마감일마다 종일 일정이 만들어지고, 설정한 기간마다 알림(VALARM)이 붙습니다. 달력 앱에서 파일을 가져오면 됩니다.</p>
+            <ul class="bullets">
+              <li>자격 번호는 파일에 넣지 않습니다.</li>
+              <li>항목을 바꾼 뒤에는 파일을 다시 받아 가져오세요. 같은 항목·마감일은 같은 식별자를 가집니다.</li>
+              <li>알림이 울리는 시각은 달력 앱 설정에 따릅니다. 앱에 따라 종일 일정 알림이 다르게 동작할 수 있습니다.</li>
+            </ul>
+            <div class="actions"><button class="btn btn-primary" type="button" id="ics-btn">달력 파일 받기 (.ics)</button></div>
+          </div>
+
+          <div class="card form">
+            <h3>브라우저 알림 (앱을 열었을 때)</h3>
+            <p>앱을 열면 알림 기간 안에 든 항목을 한 번씩 브라우저 알림으로 보여 줍니다. 서버가 없어서 앱이 닫혀 있으면 알림이 오지 않습니다.</p>
+            <p id="notify-status" class="muted" role="status"></p>
+            <div class="actions"><button class="btn btn-secondary" type="button" id="notify-btn">브라우저 알림 허용</button></div>
+          </div>
+        </section>
+
+        <!-- 백업·인쇄 -->
+        <section id="panel-backup" class="panel" role="tabpanel" aria-labelledby="tab-backup" hidden>
+          <div class="card form">
+            <h3>JSON 백업</h3>
+            <p>자격, 학점 기록, 알림 설정을 한 파일로 저장합니다. 불러오면 현재 데이터를 모두 바꿉니다.</p>
+            <div class="actions"><button class="btn btn-primary" type="button" id="json-btn">백업 파일 저장</button></div>
+            <div class="field">
+              <label for="import-file">백업 파일 불러오기</label>
+              <input id="import-file" type="file" accept="application/json,.json">
+            </div>
+            <div id="import-msg" role="status"></div>
+          </div>
+
+          <div class="card form">
+            <h3>요약 인쇄</h3>
+            <p>자격별 마감일, 필요 학점, 이수 학점을 한 장으로 정리합니다.</p>
+            <div class="actions"><button class="btn btn-secondary" type="button" id="print-btn">인쇄 또는 PDF로 저장</button></div>
+            <div id="print-summary" class="print-area">
+              <h2 class="print-title">자격·면허 갱신·보수교육 요약</h2>
+              <p class="print-meta" id="print-meta"></p>
+              <div class="table-wrap">
+                <table>
+                  <thead><tr><th scope="col">자격명</th><th scope="col">발급 기관</th><th scope="col">만료일</th><th scope="col">남은 기간</th><th scope="col">주기 시작</th><th scope="col">필요</th><th scope="col">이수</th><th scope="col">상태</th></tr></thead>
+                  <tbody id="print-body"></tbody>
+                </table>
+              </div>
+              <p class="disclaimer">참고용 계산 결과이며 법률, 세무, 재무 자문이 아닙니다.</p>
+            </div>
+          </div>
+
+          <div class="card form danger-zone">
+            <h3>데이터 삭제</h3>
+            <p>이 브라우저에 저장된 모든 자격과 학점 기록을 지웁니다. 되돌릴 수 없으니 먼저 백업을 받으세요.</p>
+            <div class="actions"><button class="btn btn-danger" type="button" id="reset-btn">모든 데이터 삭제</button></div>
+          </div>
+        </section>
+
+        <!-- AI -->
+        <section id="panel-ai" class="panel" role="tabpanel" aria-labelledby="tab-ai" hidden>
+          <div class="card form">
+            <h3>AI 보수교육 계획 (선택 기능)</h3>
+            <p>남은 학점을 월별로 나눈 계획을 만듭니다. 사용하지 않아도 앱의 모든 기능이 동작합니다.</p>
+            <p class="warn-note" role="note">브라우저에 저장한 API 키는 개발자도구에서 볼 수 있습니다. 공용 컴퓨터에서는 저장하지 마세요.</p>
+            <form id="key-form" novalidate>
+              <div class="field">
+                <label for="ai-key">Anthropic API 키 (본인 키)</label>
+                <input id="ai-key" type="password" autocomplete="off" spellcheck="false" placeholder="sk-ant-…">
+              </div>
+              <p class="form-error" id="key-error" role="alert" hidden></p>
+              <p class="muted" id="key-status" role="status"></p>
+              <div class="actions">
+                <button class="btn btn-primary" type="submit">키 저장</button>
+                <button class="btn btn-ghost" type="button" id="key-clear">키 삭제</button>
+              </div>
+            </form>
+            <details class="sent">
+              <summary>AI 기능으로 보내는 내용</summary>
+              <ul class="bullets">
+                <li>익명 기호(A1, A2…), 남은 학점, 남은 개월 수</li>
+                <li>분류 이름과 분류별 이수 학점 숫자</li>
+                <li>보내지 않는 것: 자격명, 발급 기관, 자격 번호, 메모, 과정명, 제공 기관, 날짜</li>
+              </ul>
+              <p class="hint">마감이 12개월 넘게 남았거나 항목이 8개를 넘으면 AI 대신 로컬 계획을 씁니다. 버튼을 누를 때만 전송합니다.</p>
+            </details>
+            <div class="field">
+              <fieldset class="radio-group">
+                <legend>로컬 계획 방식</legend>
+                <label><input type="radio" name="plan-mode" value="even" checked> 균등 분배 (매달 비슷하게)</label>
+                <label><input type="radio" name="plan-mode" value="front"> 앞당김 (앞쪽 절반에 몰아서)</label>
+              </fieldset>
+            </div>
+            <div class="actions">
+              <button class="btn btn-primary" type="button" id="ai-run">AI로 계획 만들기</button>
+              <button class="btn btn-secondary" type="button" id="local-run">AI 없이 로컬 계획 보기</button>
+            </div>
+            <p class="muted" id="ai-status" role="status"></p>
+          </div>
+          <div id="plan-out" aria-live="polite"></div>
+          <p class="disclaimer">계획은 참고용 제안입니다. 실제 이수 가능 여부와 과정 선택은 본인이 확인하세요.</p>
+        </section>
+      </div>
+    </section>
+
+    <section id="faq" class="section">
+      <div class="wrap narrow">
+        <h2>자주 묻는 질문</h2>
+        <details class="faq card">
+          <summary>데이터는 어디에 저장되나요?</summary>
+          <p>이 브라우저의 로컬 저장소(localStorage)에만 저장합니다. 서버로 보내지 않습니다. 브라우저 데이터를 지우거나 다른 기기를 쓰면 보이지 않으니 JSON 백업을 받아 두세요.</p>
+        </details>
+        <details class="faq card">
+          <summary>템플릿의 주기와 시간은 맞나요?</summary>
+          <p>모두 예시 값입니다. 템플릿은 입력 칸을 채우는 용도일 뿐이며, 실제 주기와 이수 시간은 발급 기관과 최신 법령에서 확인해 직접 고쳐 쓰세요.</p>
+        </details>
+        <details class="faq card">
+          <summary>알림이 자동으로 울리나요?</summary>
+          <p>이 앱은 서버가 없어서 스스로 알림을 보내지 못합니다. .ics 파일을 달력 앱에 가져와야 알림이 등록됩니다. 앱을 열면 기한 임박 항목을 상단에 표시합니다.</p>
+        </details>
+        <details class="faq card">
+          <summary>학점은 어떤 기간을 기준으로 세나요?</summary>
+          <p>만료일을 주기 종료일로 보고, 종료일 − 주기(년) + 1일부터 종료일까지 기록한 학점을 이번 주기로 집계합니다. 기간 밖 기록은 따로 표시하며 합계에 넣지 않습니다. 이월 학점은 직접 입력합니다.</p>
+        </details>
+        <details class="faq card">
+          <summary>AI 기능은 꼭 써야 하나요?</summary>
+          <p>아닙니다. 로컬 계획은 API 키 없이 동작합니다. AI 기능을 쓰려면 본인 Anthropic API 키를 직접 넣어야 하며, 이때 위에 적힌 최소한의 숫자 정보만 보냅니다.</p>
+        </details>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="wrap footer-grid">
+      <div>
+        <p class="footer-brand">licensetrack</p>
+        <p class="muted">자격·면허 갱신과 보수교육을 놓치지 않도록 돕는 개인용 트래커입니다.</p>
+      </div>
+      <div>
+        <p class="privacy"><strong>데이터는 이 브라우저에만 저장됩니다.</strong> 서버 계정이나 업로드는 없습니다.</p>
+        <p class="muted small">본 서비스의 계산 결과와 템플릿은 참고용입니다. 법률, 세무, 재무 자문이 아니며 실제 기한과 요건은 발급 기관에서 확인하세요.</p>
+      </div>
+      <p class="muted small copyright">© 2026 licensetrack. 모든 권리 보유.</p>
+    </div>
+  </footer>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
