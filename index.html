@@ -4,12 +4,12 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>licensetrack · 자격·면허 갱신과 보수교육 트래커</title>
-  <meta name="description" content="자격증·면허의 갱신 기한과 보수교육 학점을 한 화면에서 관리하세요. 달력 알림 파일, 학점 페이스 계산, JSON 백업을 지원합니다. 데이터는 이 브라우저에만 저장됩니다.">
+  <meta name="description" content="자격증·면허의 갱신 기한과 보수교육 학점을 한 화면에서 관리하세요. 보유자별 보기, 연간 달력, 달력 알림 파일, JSON 백업과 CSV 가져오기를 지원합니다. 데이터는 이 브라우저에만 저장됩니다.">
   <meta name="theme-color" content="#1D4ED8">
   <meta property="og:type" content="website">
   <meta property="og:locale" content="ko_KR">
   <meta property="og:title" content="licensetrack · 자격·면허 갱신과 보수교육 트래커">
-  <meta property="og:description" content="만료일, 학점 페이스, 달력 알림을 한곳에서. 데이터는 이 브라우저에만 저장됩니다.">
+  <meta property="og:description" content="만료일, 학점 진행률, 연간 달력, 달력 알림을 한곳에서. 데이터는 이 브라우저에만 저장됩니다.">
   <meta property="og:image" content="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%231D4ED8'/%3E%3Cpath d='M18 33l8 8 20-22' stroke='white' stroke-width='6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231D4ED8'/%3E%3Cpath d='M9 17l4 4 10-11' stroke='white' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="styles.css">
@@ -20,65 +20,188 @@
   <header class="topbar">
     <div class="wrap topbar-inner">
       <a class="brand" href="#top" aria-label="licensetrack 홈">
-        <svg width="28" height="28" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="var(--accent)"/><path d="M9 17l4 4 10-11" stroke="var(--on-accent)" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <svg width="28" height="28" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="var(--accent)"/><path d="M9 17l4 4 10-11" stroke="#FFFFFF" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
         <span>licensetrack</span>
       </a>
       <nav class="topnav" aria-label="페이지 안내">
+        <a href="#screens">화면</a>
         <a href="#features">기능</a>
         <a href="#how">사용 순서</a>
         <a href="#faq">자주 묻는 질문</a>
       </nav>
-      <a class="btn btn-primary btn-sm" href="#app">지금 시작하기</a>
+      <a class="btn btn-primary btn-sm" href="#app">앱 열기</a>
     </div>
   </header>
 
   <main id="top">
-    <section class="hero">
-      <div class="wrap">
-        <p class="eyebrow">자격·면허 갱신 &amp; 보수교육 트래커</p>
-        <h1>갱신 기한과 보수교육 학점,<br>놓치기 전에 보이게</h1>
-        <p class="lead">여러 개의 자격을 가진 분을 위해 만들었습니다. 만료일과 주기, 이수 학점을 기록하면 남은 기간과 필요한 페이스를 계산하고, 달력에 넣을 알림 파일을 만들어 드립니다. 데이터는 이 브라우저에만 저장됩니다.</p>
-        <div class="hero-actions">
-          <a class="btn btn-primary" href="#app">내 자격 등록하기</a>
-          <a class="btn btn-ghost" href="#how">어떻게 쓰나요?</a>
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="wrap hero-grid">
+        <div class="hero-copy">
+          <p class="eyebrow">자격·면허 갱신과 보수교육 트래커</p>
+          <h1 id="hero-title">갱신 기한과 학점을<br>한 장의 화면으로</h1>
+          <p class="lead">자격마다 만료일이나 주기, 필요 학점을 적어 두면 남은 기간과 이수 진행률, 앞으로 울릴 알림을 한 번에 봅니다. 가족 자격은 보유자별로 나눠 봅니다. 데이터는 이 브라우저에만 저장됩니다.</p>
+          <div class="hero-actions">
+            <a class="btn btn-primary" href="#app">내 자격 등록하기</a>
+            <a class="btn btn-ghost" href="#screens">화면 미리 보기</a>
+          </div>
+          <ul class="hero-points" aria-label="특징">
+            <li>계정·서버 없음</li>
+            <li>달력(.ics) 알림 파일</li>
+            <li>JSON 백업·CSV 가져오기</li>
+          </ul>
+          <p class="fineprint">화면의 자격명과 학점은 예시 데이터입니다. 템플릿의 주기와 시간은 예시 · 확인 필요입니다.</p>
         </div>
-        <p class="fineprint">예시 템플릿의 주기와 시간은 참고용입니다. 반드시 발급 기관과 최신 법령에서 확인하세요.</p>
+
+        <figure class="shot" aria-label="대시보드 예시 화면">
+          <div class="shot-bar" aria-hidden="true"><span></span><span></span><span></span><em>licensetrack · 대시보드 (예시 데이터)</em></div>
+          <div class="shot-body">
+            <p class="shot-date">오늘 2026-11-06 기준으로 계산</p>
+            <ul class="counts" aria-label="상태별 개수 예시">
+              <li><span class="badge b-expired">만료</span><strong>0</strong></li>
+              <li><span class="badge b-d30">30일 이내</span><strong>1</strong></li>
+              <li><span class="badge b-d90">90일 이내</span><strong>1</strong></li>
+              <li><span class="badge b-ok">여유</span><strong>0</strong></li>
+            </ul>
+            <article class="card item-card">
+              <div class="item-head">
+                <div style="min-width:0">
+                  <h3>안전관리자 (예시)</h3>
+                  <p>어머니 · 2년 주기</p>
+                </div>
+                <span class="badge b-d30">30일 이내</span>
+              </div>
+              <dl class="facts">
+                <div><dt>만료일</dt><dd>2026-11-20</dd></div>
+                <div><dt>남은 기간</dt><dd>D-14</dd></div>
+                <div class="wide"><dt>이수 / 필요</dt><dd>9 / 24</dd></div>
+              </dl>
+              <div>
+                <div class="progress is-risk" role="img" aria-label="이수 38%, 예시"><span style="width:37.5%"></span></div>
+                <div class="progress-label"><span class="status-tag s-risk">현재 페이스로 부족 예상</span><span>38%</span></div>
+              </div>
+            </article>
+            <div>
+              <p class="shot-caption">최근 26주 학점 기록 (예시)</p>
+              <div class="mini-heat" aria-hidden="true"><i class="h1"></i><i class="h0"></i><i class="h1"></i><i class="h4"></i><i class="h2"></i><i class="h1"></i><i class="h3"></i><i class="h3"></i><i class="h0"></i><i class="h4"></i><i class="h0"></i><i class="h0"></i><i class="h4"></i><i class="h0"></i><i class="h0"></i><i class="h0"></i><i class="h0"></i><i class="h2"></i><i class="h3"></i><i class="h2"></i><i class="h2"></i><i class="h0"></i><i class="h1"></i><i class="h1"></i><i class="h0"></i><i class="h3"></i><i class="h0"></i><i class="h2"></i><i class="h0"></i><i class="h0"></i><i class="h2"></i><i class="h2"></i><i class="h3"></i><i class="h2"></i><i class="h2"></i><i class="h2"></i><i class="h0"></i><i class="h0"></i><i class="h0"></i><i class="h1"></i><i class="h0"></i><i class="h0"></i><i class="h2"></i><i class="h0"></i><i class="h3"></i><i class="h1"></i><i class="h0"></i><i class="h1"></i><i class="h1"></i><i class="h0"></i><i class="h0"></i><i class="h3"></i><i class="h1"></i><i class="h0"></i><i class="h2"></i><i class="h1"></i><i class="h0"></i><i class="h1"></i><i class="h0"></i><i class="h0"></i><i class="h1"></i><i class="h1"></i><i class="h1"></i><i class="h0"></i><i class="h1"></i><i class="h0"></i><i class="h2"></i><i class="h0"></i><i class="h0"></i><i class="h3"></i><i class="h1"></i><i class="h1"></i><i class="h3"></i><i class="h0"></i><i class="h1"></i><i class="h0"></i><i class="h1"></i><i class="h2"></i><i class="h0"></i><i class="h0"></i><i class="h1"></i><i class="h0"></i><i class="h0"></i><i class="h2"></i><i class="h2"></i><i class="h1"></i><i class="h0"></i><i class="h1"></i><i class="h0"></i><i class="h0"></i><i class="h3"></i><i class="h0"></i><i class="h1"></i><i class="h0"></i><i class="h3"></i><i class="h2"></i><i class="h1"></i><i class="h0"></i><i class="h2"></i><i class="h0"></i><i class="h0"></i><i class="h1"></i><i class="h2"></i><i class="h0"></i><i class="h0"></i><i class="h1"></i><i class="h0"></i><i class="h4"></i><i class="h0"></i><i class="h1"></i><i class="h1"></i><i class="h3"></i><i class="h2"></i><i class="h4"></i><i class="h0"></i><i class="h0"></i><i class="h1"></i><i class="h0"></i><i class="h2"></i><i class="h1"></i><i class="h3"></i><i class="h2"></i><i class="h1"></i><i class="h3"></i><i class="h0"></i><i class="h1"></i><i class="h3"></i><i class="h1"></i><i class="h0"></i><i class="h2"></i><i class="h3"></i><i class="h3"></i><i class="h0"></i><i class="h0"></i><i class="h0"></i><i class="h0"></i><i class="h0"></i><i class="h2"></i><i class="h2"></i><i class="h0"></i><i class="h1"></i><i class="h0"></i><i class="h0"></i><i class="h1"></i><i class="h1"></i><i class="h3"></i><i class="h3"></i><i class="h0"></i><i class="h2"></i><i class="h0"></i><i class="h2"></i><i class="h0"></i><i class="h0"></i><i class="h2"></i><i class="h0"></i><i class="h3"></i><i class="h0"></i><i class="h0"></i><i class="h1"></i><i class="h1"></i><i class="h1"></i><i class="h3"></i><i class="h1"></i><i class="h4"></i><i class="h0"></i><i class="h1"></i><i class="h1"></i><i class="h0"></i><i class="h1"></i><i class="h2"></i><i class="h1"></i><i class="h0"></i><i class="h3"></i><i class="h1"></i><i class="h1"></i><i class="h2"></i><i class="h2"></i><i class="h0"></i><i class="h3"></i><i class="h0"></i><i class="h0"></i><i class="h0"></i></div>
+            </div>
+            <ol class="timeline" aria-label="마감 타임라인 예시">
+              <li><time datetime="2026-11-20">2026-11-20</time><span>안전관리자 (예시)</span><span class="dday">D-14</span></li>
+              <li><time datetime="2027-03-31">2027-03-31</time><span>간호사 면허 (예시)</span><span class="dday">D-145</span></li>
+            </ol>
+          </div>
+        </figure>
       </div>
     </section>
 
-    <section id="features" class="section">
+    <section id="screens" class="section section-alt" aria-labelledby="screens-title">
       <div class="wrap">
-        <h2>기한을 놓치면 벌금, 면허 정지, 소득 손실이 생깁니다</h2>
-        <p class="section-sub">흩어진 수료증과 달력 메모 대신, 하나의 기록과 하나의 화면으로 관리하세요.</p>
+        <h2 id="screens-title">화면은 네 가지로 나뉩니다</h2>
+        <p class="section-sub">대시보드에서 전체를 보고, 자격 탭에서 등록하고, 학점 탭에서 기록하고, 알림·달력 탭에서 시점을 정합니다. 각 화면은 같은 데이터를 다른 방식으로 보여 줍니다.</p>
         <div class="feature-grid">
           <article class="card feature">
-            <h3>만료일과 갱신 주기</h3>
-            <p>만료일을 직접 입력하거나 발급일과 주기(년)만 넣으면 됩니다. 주기 기간과 다음 마감을 자동으로 계산합니다.</p>
+            <h3>대시보드</h3>
+            <p>만료, 30일 이내, 90일 이내, 여유 순으로 정렬하고, 보유자별로 묶어 볼 수 있습니다.</p>
+            <div class="feat-visual" aria-hidden="true">
+              <div class="chip-row"><span class="chip is-on">전체 3</span><span class="chip">본인 2</span><span class="chip">어머니 1</span></div>
+              <div class="mini-line"><time>2026-11-20</time><span>안전관리자 (예시)</span><b>D-14</b></div>
+              <div class="mini-line"><time>2027-03-31</time><span>간호사 면허 (예시)</span><b>D-145</b></div>
+            </div>
           </article>
           <article class="card feature">
-            <h3>학점 페이스와 예상 부족</h3>
-            <p>이수 진행률, 남은 기간의 월 필요량, 지금 속도로 가면 얼마나 부족할지 보여 줍니다.</p>
+            <h3>학점 기록과 페이스</h3>
+            <p>주기 기간 안의 기록만 합산합니다. 지금 속도로 가면 부족할지, 남은 기간에 매달 얼마가 필요한지 보여 줍니다.</p>
+            <div class="feat-visual" aria-hidden="true">
+              <div class="progress" style="height:10px"><span style="width:37.5%"></span></div>
+              <p class="meta">이수 9 / 필요 24 · 남은 기간 월 15 학점 필요 (예시)</p>
+            </div>
           </article>
           <article class="card feature">
-            <h3>달력 알림 파일</h3>
-            <p>180·90·30·7일 전 알림을 담은 .ics 파일을 받아 휴대폰이나 PC 달력에 넣을 수 있습니다.</p>
+            <h3>연간 달력</h3>
+            <p>하루 단위로 학점 기록의 양과 마감일을 한 해 전체에 펼쳐 봅니다. 해를 넘겨 가며 볼 수 있습니다.</p>
+            <div class="feat-visual" aria-hidden="true">
+              <div class="mini-heat"><i class="h3"></i><i class="h2"></i><i class="h0"></i><i class="h1"></i><i class="h3"></i><i class="h1"></i><i class="h0"></i><i class="h3"></i><i class="h0"></i><i class="h1"></i><i class="h0"></i><i class="h0"></i><i class="h0"></i><i class="h4"></i><i class="h0"></i><i class="h0"></i><i class="h0"></i><i class="h0"></i><i class="h2"></i><i class="h1"></i><i class="h0"></i><i class="h0"></i><i class="h1"></i><i class="h0"></i><i class="h3"></i><i class="h0"></i><i class="h1"></i><i class="h0"></i><i class="h1"></i><i class="h0"></i><i class="h1"></i><i class="h0"></i><i class="h2"></i><i class="h0"></i><i class="h2"></i><i class="h0"></i><i class="h2"></i><i class="h1"></i><i class="h1"></i><i class="h0"></i><i class="h0"></i><i class="h0"></i><i class="h0"></i><i class="h0"></i><i class="h0"></i><i class="h1"></i><i class="h0"></i><i class="h0"></i><i class="h1"></i><i class="h4"></i><i class="h3"></i><i class="h0"></i><i class="h1"></i><i class="h2"></i><i class="h2"></i><i class="h0"></i><i class="h1"></i><i class="h0"></i><i class="h3"></i><i class="h0"></i><i class="h0"></i><i class="h3"></i><i class="h0"></i><i class="h0"></i><i class="h1"></i><i class="h2"></i><i class="h1"></i><i class="h1"></i><i class="h3"></i><i class="h1"></i><i class="h2"></i><i class="h2"></i><i class="h0"></i><i class="h1"></i><i class="h2"></i><i class="h4"></i><i class="h1"></i><i class="h0"></i><i class="h4"></i><i class="h0"></i><i class="h0"></i><i class="h0"></i><i class="h1"></i><i class="h0"></i><i class="h0"></i><i class="h0"></i><i class="h0"></i><i class="h0"></i><i class="h1"></i><i class="h1"></i><i class="h2"></i><i class="h1"></i><i class="h1"></i><i class="h0"></i><i class="h2"></i><i class="h4"></i><i class="h3"></i><i class="h2"></i><i class="h0"></i><i class="h0"></i><i class="h0"></i><i class="h1"></i><i class="h2"></i><i class="h0"></i><i class="h2"></i><i class="h0"></i><i class="h3"></i><i class="h2"></i><i class="h0"></i><i class="h2"></i><i class="h0"></i><i class="h0"></i><i class="h0"></i><i class="h4"></i><i class="h1"></i><i class="h3"></i><i class="h2"></i><i class="h2"></i><i class="h0"></i><i class="h4"></i><i class="h1"></i><i class="h4"></i><i class="h1"></i><i class="h3"></i><i class="h2"></i><i class="h2"></i><i class="h1"></i><i class="h3"></i><i class="h0"></i><i class="h0"></i><i class="h2"></i><i class="h3"></i><i class="h1"></i><i class="h0"></i><i class="h2"></i><i class="h1"></i><i class="h0"></i><i class="h3"></i><i class="h4"></i><i class="h0"></i><i class="h1"></i><i class="h1"></i><i class="h0"></i><i class="h3"></i><i class="h0"></i><i class="h0"></i><i class="h0"></i><i class="h2"></i><i class="h3"></i><i class="h0"></i><i class="h3"></i><i class="h0"></i><i class="h0"></i><i class="h0"></i><i class="h0"></i><i class="h0"></i><i class="h2"></i><i class="h1"></i><i class="h0"></i><i class="h0"></i><i class="h3"></i><i class="h2"></i><i class="h1"></i><i class="h1"></i><i class="h0"></i><i class="h2"></i><i class="h1"></i><i class="h1"></i><i class="h1"></i><i class="h3"></i><i class="h0"></i><i class="h1"></i><i class="h2"></i><i class="h0"></i><i class="h3"></i><i class="h1"></i><i class="h2"></i><i class="h0"></i><i class="h0"></i><i class="h1"></i><i class="h0"></i><i class="h1"></i></div>
+            </div>
           </article>
           <article class="card feature">
-            <h3>백업, CSV, 인쇄</h3>
-            <p>JSON 백업으로 기기를 옮기고, 학점 기록은 CSV로 내보내며, 요약표는 인쇄하거나 PDF로 저장합니다.</p>
+            <h3>알림 기간과 달력 파일</h3>
+            <p>표준·짧게·길게 프리셋 중 고르거나 직접 입력합니다. 앞으로 울릴 날짜를 목록으로 보여 주고, .ics 파일로 내보냅니다.</p>
+            <div class="feat-visual" aria-hidden="true">
+              <div class="chip-row"><span class="chip is-on">표준 180·90·30·7일 전</span></div>
+              <div class="mini-line"><time>2026-11-13</time><span>안전관리자 (예시) · 7일 전</span><b></b></div>
+              <div class="mini-line"><time>2026-12-06</time><span>안전관리자 (예시) · 14일 전</span><b></b></div>
+            </div>
+          </article>
+          <article class="card feature">
+            <h3>템플릿과 중복 확인</h3>
+            <p>예시 템플릿의 주기와 필요 학점은 직접 고칠 수 있습니다. 이름이나 자격 번호가 같은 항목은 저장 전에 알려 줍니다.</p>
+            <div class="feat-visual" aria-hidden="true">
+              <div class="chip-row"><span class="chip">예시 · 확인 필요</span><span class="chip is-on">사용자 수정값</span></div>
+              <p class="meta">비슷한 자격이 있습니다: 간호사 면허 / 간호사면허 (이름 같음)</p>
+            </div>
+          </article>
+          <article class="card feature">
+            <h3>백업·CSV·인쇄</h3>
+            <p>JSON 백업으로 기기를 옮기고, 학점 기록은 CSV로 내보내거나 가져옵니다. 가져올 때 틀린 행은 행 번호와 이유를 보여 줍니다.</p>
+            <div class="feat-visual" aria-hidden="true">
+              <div class="mini-line"><span>CSV 가져오기</span><span>정상 12행</span><b>오류 1행</b></div>
+              <div class="mini-line"><span>요약 인쇄</span><span>마감·필요·이수</span><b>PDF 저장</b></div>
+            </div>
           </article>
         </div>
       </div>
     </section>
 
-    <section id="how" class="section section-alt">
+    <section id="features" class="section" aria-labelledby="features-title">
       <div class="wrap">
-        <h2>사용 순서 3단계</h2>
+        <h2 id="features-title">기한을 흩어 두지 않도록</h2>
+        <p class="section-sub">수료증 봉투와 달력 메모 대신, 하나의 기록과 하나의 화면으로 관리합니다.</p>
+        <div class="trust-grid">
+          <article class="card">
+            <h3>만료일 또는 주기</h3>
+            <p>만료일을 직접 적거나 발급일과 주기(년)만 넣으면 됩니다. 주기 기간과 다음 마감을 계산합니다. 발급일과 주기로 만든 만료일은 기념일 전날로 봅니다.</p>
+          </article>
+          <article class="card">
+            <h3>보유자별로 나누기</h3>
+            <p>가족 자격을 한 앱에 넣을 때 보유자 이름을 붙이면 보유자별 요약과 필터를 씁니다. 이름은 달력 파일과 AI 기능에 들어가지 않습니다.</p>
+          </article>
+          <article class="card">
+            <h3>기록은 한 줄씩 확인</h3>
+            <p>CSV를 가져오면 자격명이 맞지 않거나 날짜가 틀린 행을 행 번호와 함께 보여 줍니다. 정상 행만 추가하고, 이미 있는 기록은 건너뜁니다.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="how" class="section section-alt" aria-labelledby="how-title">
+      <div class="wrap">
+        <h2 id="how-title">사용 순서 4단계</h2>
+        <p class="section-sub">처음에는 자격 하나만 넣어 보세요. 나머지는 같은 방식으로 이어서 넣으면 됩니다.</p>
         <ol class="steps">
-          <li class="card step"><span class="step-no" aria-hidden="true">1</span><div><h3>자격 등록</h3><p>예시 템플릿을 고른 뒤 자격명, 발급 기관, 만료일 또는 주기, 필요 학점을 입력합니다.</p></div></li>
-          <li class="card step"><span class="step-no" aria-hidden="true">2</span><div><h3>이수 기록</h3><p>교육을 들을 때마다 날짜, 시간, 과정명과 인증서 메모를 남깁니다.</p></div></li>
-          <li class="card step"><span class="step-no" aria-hidden="true">3</span><div><h3>알림 설정</h3><p>알림 기간을 정하고 .ics 파일을 달력 앱에 가져옵니다. 앱을 열면 기한 임박 항목을 상단에 알려 줍니다.</p></div></li>
+          <li class="card step"><span class="step-no" aria-hidden="true">1</span><div><h3>자격 등록</h3><p>예시 템플릿을 고르거나 직접 입력합니다. 만료일 또는 발급일과 주기, 필요 학점을 적습니다.</p></div></li>
+          <li class="card step"><span class="step-no" aria-hidden="true">2</span><div><h3>이수 기록</h3><p>교육을 받을 때마다 날짜와 시간, 과정명을 남깁니다. 여러 건이면 CSV로 한 번에 가져올 수 있습니다.</p></div></li>
+          <li class="card step"><span class="step-no" aria-hidden="true">3</span><div><h3>알림 정하기</h3><p>알림 프리셋을 고르고, 앞으로 울릴 날짜 목록을 확인합니다. 달력 앱에 .ics 파일을 가져오면 같은 날짜에 알림이 등록됩니다.</p></div></li>
+          <li class="card step"><span class="step-no" aria-hidden="true">4</span><div><h3>주기적으로 백업</h3><p>JSON 백업을 받아 두면 기기를 바꾸거나 브라우저 데이터를 지워도 되돌릴 수 있습니다.</p></div></li>
         </ol>
+      </div>
+    </section>
+
+    <section id="trust" class="section" aria-labelledby="trust-title">
+      <div class="wrap">
+        <h2 id="trust-title">데이터와 계산에 대해</h2>
+        <div class="trust-grid">
+          <article class="card">
+            <h3>저장 위치</h3>
+            <p>자격과 학점 기록은 이 브라우저의 저장소에만 있습니다. 서버 계정이나 업로드 기능이 없습니다. 브라우저 데이터를 지우면 함께 사라지니 백업을 받아 두세요.</p>
+          </article>
+          <article class="card">
+            <h3>AI 계획은 선택</h3>
+            <p>본인 API 키를 직접 넣고 버튼을 눌렀을 때만 남은 학점의 숫자 요약을 보냅니다. 키가 없어도 로컬 계획으로 같은 기능을 씁니다.</p>
+          </article>
+          <article class="card">
+            <h3>예시 값과 확인</h3>
+            <p>템플릿의 주기와 필요 학점은 예시 · 확인 필요 값입니다. 법령이나 기관 기준이 아니므로 발급 기관에서 확인해 직접 고쳐 쓰세요.</p>
+          </article>
+        </div>
       </div>
     </section>
 
@@ -312,7 +435,7 @@
             <h3>달력 파일 (.ics)</h3>
             <p>각 마감일마다 종일 일정이 만들어지고, 설정한 기간마다 알림(VALARM)이 붙습니다. 달력 앱에서 파일을 가져오면 됩니다.</p>
             <ul class="bullets">
-              <li>자격 번호는 파일에 넣지 않습니다.</li>
+              <li>자격 번호는 파일에 넣지 않습니다. 보유자 이름도 넣지 않습니다.</li>
               <li>항목을 바꾼 뒤에는 파일을 다시 받아 가져오세요. 같은 항목·마감일은 같은 식별자를 가집니다.</li>
               <li>알림이 울리는 시각은 달력 앱 설정에 따릅니다. 앱에 따라 종일 일정 알림이 다르게 동작할 수 있습니다.</li>
             </ul>
@@ -331,7 +454,7 @@
         <section id="panel-backup" class="panel" role="tabpanel" aria-labelledby="tab-backup" hidden>
           <div class="card form">
             <h3>JSON 백업</h3>
-            <p>자격, 학점 기록, 알림 설정을 한 파일로 저장합니다. 불러오면 현재 데이터를 모두 바꿉니다.</p>
+            <p>자격, 학점 기록, 알림 설정, 템플릿 수정값을 한 파일로 저장합니다. 불러오면 현재 데이터를 모두 바꿉니다.</p>
             <div class="actions"><button class="btn btn-primary" type="button" id="json-btn">백업 파일 저장</button></div>
             <div class="field">
               <label for="import-file">백업 파일 불러오기</label>
@@ -387,7 +510,7 @@
               <ul class="bullets">
                 <li>익명 기호(A1, A2…), 남은 학점, 남은 개월 수</li>
                 <li>분류 이름과 분류별 이수 학점 숫자</li>
-                <li>보내지 않는 것: 자격명, 발급 기관, 자격 번호, 메모, 과정명, 제공 기관, 날짜</li>
+                <li>보내지 않는 것: 자격명, 발급 기관, 자격 번호, 보유자, 메모, 과정명, 제공 기관, 날짜</li>
               </ul>
               <p class="hint">마감이 12개월 넘게 남았거나 항목이 8개를 넘으면 AI 대신 로컬 계획을 씁니다. 버튼을 누를 때만 전송합니다.</p>
             </details>
@@ -410,24 +533,32 @@
       </div>
     </section>
 
-    <section id="faq" class="section">
+    <section id="faq" class="section" aria-labelledby="faq-title">
       <div class="wrap narrow">
-        <h2>자주 묻는 질문</h2>
+        <h2 id="faq-title">자주 묻는 질문</h2>
         <details class="faq card">
           <summary>데이터는 어디에 저장되나요?</summary>
           <p>이 브라우저의 로컬 저장소(localStorage)에만 저장합니다. 서버로 보내지 않습니다. 브라우저 데이터를 지우거나 다른 기기를 쓰면 보이지 않으니 JSON 백업을 받아 두세요.</p>
         </details>
         <details class="faq card">
           <summary>템플릿의 주기와 시간은 맞나요?</summary>
-          <p>모두 예시 값입니다. 템플릿은 입력 칸을 채우는 용도일 뿐이며, 실제 주기와 이수 시간은 발급 기관과 최신 법령에서 확인해 직접 고쳐 쓰세요.</p>
+          <p>모두 예시 · 확인 필요 값입니다. 템플릿은 입력 칸을 채우는 출발점이며, 자격 탭의 편집 칸에서 주기와 필요 학점을 바꿀 수 있습니다. 실제 값은 발급 기관과 최신 법령에서 확인하세요.</p>
         </details>
         <details class="faq card">
           <summary>알림이 자동으로 울리나요?</summary>
           <p>이 앱은 서버가 없어서 스스로 알림을 보내지 못합니다. .ics 파일을 달력 앱에 가져와야 알림이 등록됩니다. 앱을 열면 기한 임박 항목을 상단에 표시합니다.</p>
         </details>
         <details class="faq card">
+          <summary>가족 자격을 한 앱에서 나눠 볼 수 있나요?</summary>
+          <p>자격마다 보유자 이름을 적으면 대시보드에서 보유자별로 보고, 보유자별 요약 카드를 눌러 거를 수 있습니다. 보유자 이름은 달력 파일과 AI 기능으로 보내지 않습니다.</p>
+        </details>
+        <details class="faq card">
           <summary>학점은 어떤 기간을 기준으로 세나요?</summary>
           <p>만료일을 주기 종료일로 보고, 종료일 − 주기(년) + 1일부터 종료일까지 기록한 학점을 이번 주기로 집계합니다. 기간 밖 기록은 따로 표시하며 합계에 넣지 않습니다. 이월 학점은 직접 입력합니다.</p>
+        </details>
+        <details class="faq card">
+          <summary>CSV를 가져오다 오류가 나면 어떻게 하나요?</summary>
+          <p>오류가 난 행만 건너뛰고 나머지 정상 행은 추가합니다. 행 번호와 이유를 보여 주므로 그 행을 고쳐서 다시 가져오세요. 자격명이 같은 자격이 두 개 있으면 그 행은 가져오지 않습니다.</p>
         </details>
         <details class="faq card">
           <summary>AI 기능은 꼭 써야 하나요?</summary>
