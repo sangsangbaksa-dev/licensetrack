@@ -271,6 +271,15 @@
           <form id="lead-form" class="card form" novalidate>
             <h3>알림 기간</h3>
             <div class="field">
+              <span class="field-label" id="preset-label">프리셋 (누르면 바로 저장)</span>
+              <div class="preset-row" role="group" aria-labelledby="preset-label">
+                <button class="btn btn-secondary btn-small" type="button" data-preset="standard" aria-pressed="false">표준 180·90·30·7일 전</button>
+                <button class="btn btn-secondary btn-small" type="button" data-preset="short" aria-pressed="false">짧게 30·14·7·1일 전</button>
+                <button class="btn btn-secondary btn-small" type="button" data-preset="long" aria-pressed="false">길게 365·180·90·30·14·7일 전</button>
+              </div>
+              <p class="hint" id="preset-status" role="status"></p>
+            </div>
+            <div class="field">
               <label for="leads">마감 며칠 전에 알릴까요? (쉼표로 구분)</label>
               <input id="leads" inputmode="numeric" autocomplete="off" placeholder="180, 90, 30, 7">
               <p class="hint">1~730 사이 정수, 최대 8개. 기본값은 180, 90, 30, 7 입니다.</p>
@@ -278,6 +287,13 @@
             <p class="form-error" id="lead-error" role="alert" hidden></p>
             <div class="actions"><button class="btn btn-primary" type="submit">알림 기간 저장</button></div>
           </form>
+
+          <div class="card form">
+            <h3>곧 울릴 알림 (앱 기준 예정)</h3>
+            <p class="hint">마감일 기준으로 계산한 알림 날짜입니다. 실제 알림은 .ics 를 가져온 달력 앱이나 앱을 여는 순간 표시됩니다.</p>
+            <ol class="upcoming" id="upcoming"></ol>
+            <p class="muted" id="upcoming-empty" hidden>앞으로 울릴 알림이 없습니다. 자격을 등록하거나 알림 기간을 바꿔 보세요.</p>
+          </div>
 
           <div class="card form">
             <h3>달력 파일 (.ics)</h3>

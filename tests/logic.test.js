@@ -11,6 +11,7 @@ import {
   normalizeTemplateOverrides, templatesWithOverrides, setTemplateOverride, resetTemplateOverride,
   holderOf, holderGroups, filterRowsByHolder, holderSummary,
   heatLevel, dayOfWeek, deadlinesInYear, yearHeatmap,
+  LEAD_PRESETS, leadPresetId, upcomingAlerts,
 } from '../logic.js';
 import {
   monthsAvailable, anonymizeForAi, buildPrompt, parsePlanReply,
@@ -667,5 +668,55 @@ describe('연간 달력 히트맵', () => {
     const derived = normalizeItem({ id: 'd', name: '파생', issuedOn: '2020-03-01', cycleYears: 3 });
     // 발급 2020-03-01 + 3년 - 1일 = 2023-02-28, 다음 2026-02-28
     assert.deepEqual(deadlinesInYear([derived], 2026).map((d) => d.date), ['2026-02-28']);
+  });
+});
+
+describe('알림 프리셋과 예정 알림', () => {
+  const today = '2026-11-06';
+
+  test('프리셋은 모두 normalizeLeads 를 통과하고 상한 안에 있음', () => {
+    for (const p of LEAD_PRESETS) {
+      assert.deepEqual(normalizeLeads(p.leads).length, p.leads.length);
+      assert.ok(p.leads.length <= CONSTANTS.limits.leadCount);
+    }
+  });
+
+  test('프리셋 감지: 순서와 무관하게 같은 값이면 그 id, 다르면 null', () => {
+    assert.equal(leadPresetId([7, 30, 90, 180]), 'standard');
+    assert.equal(leadPresetId([1, 7, 14, 30]), 'short');
+    assert.equal(leadPresetId([30, 90]), null);
+    assert.equal(leadPresetId([]), null);
+  });
+
+  test('예정 알림: 마감 L일 전 날짜, 오늘 이전 알림과 만료 항목은 제외, 날짜순', () => {
+    const rows = buildDashboard([
+      item({ id: 'a', name: '가', expiresOn: '2026-12-31', cycleYears: 0, requiredCredits: null }),
+      item({ id: 'b', name: '나', expiresOn: '2026-11-10', cycleYears: 0, requiredCredits: null }),
+      item({ id: 'c', name: '만료', expiresOn: '2026-10-01', cycleYears: 0, requiredCredits: null }),
+    ], [], today).rows;
+    const up = upcomingAlerts(rows, [30, 7], today);
+    assert.deepEqual(up.map((x) => [x.name, x.alertOn, x.lead]), [
+      ['나', '2026-11-03', 7],
+      ['가', '2026-12-01', 30],
+      ['가', '2026-12-24', 7],
+    ].filter((r) => r[1] >= today).sort((a, b) => (a[1] < b[1] ? -1 : 1)));
+    assert.equal(up.some((x) => x.name === '만료'), false);
+  });
+
+  test('예정 알림: limit 적용, 같은 날 알림은 리드타임이 긴 것부터', () => {
+    const rows = buildDashboard([
+      item({ id: 'a', name: '가', expiresOn: '2026-11-17', requiredCredits: null, cycleYears: 0 }),
+      item({ id: 'b', name: '나', expiresOn: '2026-11-13', requiredCredits: null, cycleYears: 0 }),
+    ], [], today).rows;
+    // 가: 17-7 = 11-10 (7일 전), 17-3 = 11-14 ; 나: 13-7 = 11-06 (7일 전)
+    const up = upcomingAlerts(rows, [7, 3], today, 2);
+    assert.deepEqual(up.map((x) => [x.name, x.alertOn]), [['나', '2026-11-06'], ['가', '2026-11-10']]);
+    // 같은 날(11-06): 가는 14일 전(11-03, 지남)이라 제외, 나는 7일 전. 같은 날 두 건은 리드타임 긴 순
+    const tie = buildDashboard([
+      item({ id: 'x', name: 'X', expiresOn: '2026-11-20', requiredCredits: null, cycleYears: 0 }),
+      item({ id: 'y', name: 'Y', expiresOn: '2026-11-13', requiredCredits: null, cycleYears: 0 }),
+    ], [], today).rows;
+    const same = upcomingAlerts(tie, [14, 7], today).filter((x) => x.alertOn === '2026-11-06');
+    assert.deepEqual(same.map((x) => [x.name, x.lead]), [['X', 14], ['Y', 7]]);
   });
 });

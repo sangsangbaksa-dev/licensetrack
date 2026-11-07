@@ -314,6 +314,14 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-sp
 .holder-card[aria-pressed="true"] { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
 .holder-card .meta { color: var(--muted); font-size: .88rem; }
 
+/* 알림 프리셋·예정 알림 */
+.field-label { font-weight: 600; }
+.preset-row { display: flex; flex-wrap: wrap; gap: .5rem; }
+.preset-row [aria-pressed="true"] { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+.upcoming { list-style: none; padding: 0; margin: 0; display: grid; gap: .4rem; }
+.upcoming li { display: flex; flex-wrap: wrap; gap: .35rem .75rem; align-items: baseline; }
+.upcoming time { font-variant-numeric: tabular-nums; font-weight: 700; min-width: 7.5rem; }
+
 /* 연간 달력 */
 .heat { display: grid; gap: .6rem; }
 .heat h3 { margin: 0; }

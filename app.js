@@ -5,6 +5,7 @@ import {
   buildBackup, validateBackup, buildCreditsCsv, buildPrintRows, newId, ValidationError,
   templatesWithOverrides, setTemplateOverride, resetTemplateOverride,
   holderOf, holderGroups, holderSummary, yearHeatmap,
+  LEAD_PRESETS, leadPresetId, upcomingAlerts,
 } from './logic.js';
 import {
   AI_LIMITS, planEligibility, anonymizeForAi, buildPrompt, parsePlanReply, fallbackPlan,
@@ -682,6 +683,19 @@ function deleteCredit(id) {
 /* ---------- 알림·달력 ---------- */
 function renderAlerts() {
   $('#leads').value = state.leads.join(', ');
+  const pid = leadPresetId(state.leads);
+  for (const b of document.querySelectorAll('[data-preset]')) {
+    b.setAttribute('aria-pressed', b.dataset.preset === pid ? 'true' : 'false');
+  }
+  $('#preset-status').textContent = pid
+    ? `현재 프리셋: ${LEAD_PRESETS.find((p) => p.id === pid).label}`
+    : `직접 설정: ${state.leads.join(', ')}일 전`;
+  const today = todayStr();
+  const up = upcomingAlerts(buildDashboard(state.items, state.credits, today).rows, state.leads, today);
+  $('#upcoming').replaceChildren(...up.map((u) => el('li', {},
+    el('time', { datetime: u.alertOn, text: u.alertOn }),
+    el('span', { text: `${u.name} · ${u.lead}일 전 (마감 ${u.deadline})` }))));
+  $('#upcoming-empty').hidden = up.length > 0;
   const ns = $('#notify-status');
   const btn = $('#notify-btn');
   if (!('Notification' in window)) {
@@ -694,6 +708,23 @@ function renderAlerts() {
   ns.textContent = p === 'granted' ? '알림이 허용되어 있습니다. 앱을 열면 알림 기간 안의 항목을 알려 드립니다.'
     : p === 'denied' ? '브라우저 설정에서 알림이 차단되어 있습니다. 설정에서 허용해 주세요.'
       : '아직 허용하지 않았습니다.';
+}
+
+function applyLeads(leads, message) {
+  state.leads = leads;
+  saveState();
+  renderAlerts();
+  renderDashboard();
+  toast(message);
+}
+
+function onPresetClick(e) {
+  const btn = e.target.closest('[data-preset]');
+  if (!btn) return;
+  const preset = LEAD_PRESETS.find((p) => p.id === btn.dataset.preset);
+  if (!preset) return;
+  setError('#lead-error', '');
+  applyLeads(normalizeLeads(preset.leads), `${preset.label} 프리셋을 저장했습니다.`);
 }
 
 function onLeadSubmit(e) {
@@ -1038,6 +1069,7 @@ function init() {
     renderDashboard();
   });
   $('#lead-form').addEventListener('submit', onLeadSubmit);
+  $('#panel-alerts').addEventListener('click', onPresetClick);
   $('#ics-btn').addEventListener('click', onIcsClick);
   $('#notify-btn').addEventListener('click', onNotifyClick);
   $('#json-btn').addEventListener('click', onBackupClick);

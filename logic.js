@@ -304,6 +304,40 @@ export function normalizeLeads(v) {
   return [...out].sort((a, b) => b - a);
 }
 
+/** 알림 기간 프리셋. 직접 입력값이 프리셋과 같으면 그 이름을 표시 */
+export const LEAD_PRESETS = [
+  { id: 'standard', label: '표준 180·90·30·7일 전', leads: [180, 90, 30, 7] },
+  { id: 'short', label: '짧게 30·14·7·1일 전', leads: [30, 14, 7, 1] },
+  { id: 'long', label: '길게 365·180·90·30·14·7일 전', leads: [365, 180, 90, 30, 14, 7] },
+];
+
+const leadKey = (arr) => [...arr].sort((a, b) => b - a).join(',');
+
+/** 현재 알림 기간이 프리셋 중 하나와 같으면 그 id, 아니면 null (직접 설정) */
+export function leadPresetId(leads) {
+  const key = leadKey(leads);
+  const p = LEAD_PRESETS.find((x) => leadKey(x.leads) === key);
+  return p ? p.id : null;
+}
+
+/**
+ * 앞으로 울릴 알림 날짜 목록: 마감일 L일 전 (오늘 이전 날짜는 제외, 날짜순).
+ * 만료된 항목은 제외합니다. 주기 반복 마감은 현재 만료일만 봅니다.
+ */
+export function upcomingAlerts(rows, leads, today, limit = 30) {
+  const out = [];
+  for (const r of rows) {
+    if (!r.expiry || r.daysLeft < 0) continue;
+    for (const L of leads) {
+      const alertOn = addDays(r.expiry, -L);
+      if (diffDays(alertOn, today) < 0) continue;
+      out.push({ id: r.item.id, name: r.item.name, deadline: r.expiry, alertOn, lead: L });
+    }
+  }
+  out.sort((a, b) => (a.alertOn < b.alertOn ? -1 : a.alertOn > b.alertOn ? 1 : b.lead - a.lead));
+  return out.slice(0, limit);
+}
+
 /**
  * 리드타임 안에 들어온 항목 목록. 각 항목은 "가장 가까운 알림 기간"으로 표시.
  * 만료된 항목도 포함(expired: true).
