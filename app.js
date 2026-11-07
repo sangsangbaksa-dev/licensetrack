@@ -4,7 +4,7 @@ import {
   cycleStatus, deadlinesForItem, effectiveExpiry, BUCKET_LABEL, BUCKET_ORDER, buildIcs, icsDstamp,
   buildBackup, validateBackup, buildCreditsCsv, buildPrintRows, newId, ValidationError,
   templatesWithOverrides, setTemplateOverride, resetTemplateOverride,
-  holderOf, holderGroups, holderSummary,
+  holderOf, holderGroups, holderSummary, yearHeatmap,
 } from './logic.js';
 import {
   AI_LIMITS, planEligibility, anonymizeForAi, buildPrompt, parsePlanReply, fallbackPlan,
@@ -23,6 +23,7 @@ const state = {
   templates: {},
   creditItemId: null,
   holderFilter: null, // null = 전체, '' = 미지정, 그 밖 = 보유자 이름
+  heatYear: new Date().getFullYear(),
   plan: null,
   storageOk: true,
   busy: false,
@@ -247,6 +248,7 @@ function renderDashboard() {
     el('span', { text: t.name }),
     el('span', { class: 'dday', text: ddayText(t.daysLeft) }))));
   $('#timeline-empty').hidden = tl.length > 0;
+  renderHeatmap();
 }
 
 function renderItemCard(row) {
@@ -294,6 +296,57 @@ function renderItemCard(row) {
       el('button', { class: 'btn btn-secondary btn-small', type: 'button', onclick: () => openCreditsFor(item.id), text: '학점 기록' }),
       el('button', { class: 'btn btn-ghost btn-small', type: 'button', onclick: () => startEditItem(item.id), text: '수정' })),
   );
+}
+
+/* ---------- 연간 달력 (SVG) ---------- */
+const SVG_NS = 'http://www.w3.org/2000/svg';
+
+function svgNode(tag, attrs = {}, ...kids) {
+  const n = document.createElementNS(SVG_NS, tag);
+  for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, String(v));
+  for (const c of kids.flat()) n.append(c instanceof Node ? c : document.createTextNode(String(c)));
+  return n;
+}
+
+function renderHeatmap() {
+  const today = todayStr();
+  const year = state.heatYear;
+  const hm = yearHeatmap({ year, items: state.items, credits: state.credits, today });
+  $('#heat-year').textContent = `${year}년`;
+  $('#heat-summary').textContent = hm.creditDays
+    ? `${year}년 이수 기록 ${hm.creditDays}일, 합계 ${fmt(hm.totalHours)}시간 · 마감 ${hm.deadlines.length}건`
+    : `${year}년에 기록된 학점이 없습니다. 마감 ${hm.deadlines.length}건.`;
+
+  const pad = 34, top = 20, pitch = 15, size = 12;
+  const W = pad + hm.cols * pitch, H = top + 7 * pitch;
+  const svg = svgNode('svg', {
+    class: 'heat-svg', viewBox: `0 0 ${W} ${H}`, width: W, height: H,
+    role: 'img', 'aria-label': `${year}년 달력. 학점 기록과 마감일은 아래 목록에도 있습니다.`,
+  });
+  for (const m of hm.monthMarks) {
+    svg.append(svgNode('text', { x: pad + m.col * pitch, y: 12, class: 'heat-month' }, `${m.month}월`));
+  }
+  [[1, '월'], [3, '수'], [5, '금']].forEach(([r, t]) => {
+    svg.append(svgNode('text', { x: 0, y: top + r * pitch + size - 2, class: 'heat-wd' }, t));
+  });
+  for (const d of hm.days) {
+    const x = pad + d.col * pitch;
+    const y = top + d.row * pitch;
+    const label = `${d.date}: ${d.hours ? `학점 ${fmt(d.hours)}시간` : '기록 없음'}${d.deadlines.length ? ` · 마감 ${d.deadlines.map((x2) => x2.name).join(', ')}` : ''}`;
+    const cls = `heat-cell h${d.level}${d.isToday ? ' is-today' : ''}`;
+    svg.append(svgNode('rect', { x, y, width: size, height: size, rx: 2, class: cls }, svgNode('title', {}, label)));
+    if (d.deadlines.length) {
+      svg.append(svgNode('circle', { cx: x + size / 2, cy: y + size / 2, r: 2.6, class: 'heat-dot', 'pointer-events': 'none' }));
+    }
+  }
+  const scroll = $('#heat-wrap');
+  scroll.replaceChildren(svg);
+
+  const dl = hm.deadlines;
+  $('#heat-dl-list').replaceChildren(...dl.map((d) => el('li', {},
+    el('time', { datetime: d.date, text: d.date }),
+    el('span', { text: d.name }))));
+  $('#heat-dl-empty').hidden = dl.length > 0;
 }
 
 function notifyDue(due) {
@@ -977,6 +1030,8 @@ function init() {
     renderCredits();
   });
   $('#csv-btn').addEventListener('click', onCsvClick);
+  $('#heat-prev').addEventListener('click', () => { state.heatYear -= 1; renderHeatmap(); });
+  $('#heat-next').addEventListener('click', () => { state.heatYear += 1; renderHeatmap(); });
   $('#holder-filter').addEventListener('change', (e) => {
     const v = e.target.value;
     state.holderFilter = v === 'all' ? null : v.slice(2);

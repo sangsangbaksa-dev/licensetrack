@@ -334,6 +334,94 @@ export function deadlinesForItem(item, today, horizonCycles = CONSTANTS.icsHoriz
 }
 
 /* ------------------------------------------------------------------ *
+ * 연간 달력 히트맵 데이터: 날짜별 이수 학점 단계와 마감일 목록
+ * 단계 기준(하루 이수 시간): 0 = 기록 없음, 1 = 2 미만, 2 = 5 미만, 3 = 10 미만, 4 = 10 이상
+ * ------------------------------------------------------------------ */
+export function heatLevel(hours) {
+  if (!(hours > 0)) return 0;
+  if (hours < 2) return 1;
+  if (hours < 5) return 2;
+  if (hours < 10) return 3;
+  return 4;
+}
+
+/** 0 = 일요일 ... 6 = 토요일 (1970-01-01 은 목요일) */
+export function dayOfWeek(s) {
+  return (((toDayNum(s) + 4) % 7) + 7) % 7;
+}
+
+/** 해당 연도의 마감일 목록 (주기마다 반복된 날짜 포함, 날짜순) */
+export function deadlinesInYear(items, year) {
+  const prefix = `${year}-`;
+  const out = [];
+  for (const item of items) {
+    const exp = effectiveExpiry(item);
+    if (!exp) continue;
+    const Y = item.cycleYears || 0;
+    if (!Y) {
+      if (exp.startsWith(prefix)) out.push({ date: exp, id: item.id, name: item.name });
+      continue;
+    }
+    const kmax = Math.ceil(Math.abs(year - Number(exp.slice(0, 4))) / Y) + 2;
+    for (let k = -kmax; k <= kmax; k++) {
+      const d = addYears(exp, k * Y);
+      if (d.startsWith(prefix)) out.push({ date: d, id: item.id, name: item.name });
+    }
+  }
+  return out.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+}
+
+/**
+ * 한 해의 날짜 격자. col = 주 번호(일요일 시작, 0부터), row = 요일(0 = 일).
+ * 같은 날짜에 학점 기록이 여러 건이면 합산합니다.
+ */
+export function yearHeatmap({ year, items, credits, today }) {
+  const prefix = `${year}-`;
+  const start = `${year}-01-01`;
+  const hoursBy = new Map();
+  for (const c of credits) {
+    if (c.date.startsWith(prefix)) hoursBy.set(c.date, round2((hoursBy.get(c.date) || 0) + c.hours));
+  }
+  const deadlines = deadlinesInYear(items, year);
+  const dlBy = new Map();
+  for (const d of deadlines) {
+    if (!dlBy.has(d.date)) dlBy.set(d.date, []);
+    dlBy.get(d.date).push(d);
+  }
+  const startDow = dayOfWeek(start);
+  const days = [];
+  for (let i = 0; i < 366; i++) {
+    const d = addDays(start, i);
+    if (!d.startsWith(prefix)) break;
+    const hours = hoursBy.get(d) || 0;
+    days.push({
+      date: d,
+      col: Math.floor((i + startDow) / 7),
+      row: dayOfWeek(d),
+      hours,
+      level: heatLevel(hours),
+      deadlines: dlBy.get(d) || [],
+      isToday: d === today,
+    });
+  }
+  const monthMarks = [];
+  for (const d of days) {
+    if (d.date.endsWith('-01')) monthMarks.push({ month: Number(d.date.slice(5, 7)), col: d.col });
+  }
+  const creditDays = days.filter((d) => d.hours > 0).length;
+  const totalHours = round2(days.reduce((s, d) => s + d.hours, 0));
+  return {
+    year,
+    days,
+    cols: days.length ? days[days.length - 1].col + 1 : 0,
+    monthMarks,
+    creditDays,
+    totalHours,
+    deadlines,
+  };
+}
+
+/* ------------------------------------------------------------------ *
  * ICS (RFC 5545)
  * ------------------------------------------------------------------ */
 export function utf8Length(ch) {

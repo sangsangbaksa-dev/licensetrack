@@ -10,6 +10,7 @@ import {
   buildBackup, validateBackup, buildPrintRows,
   normalizeTemplateOverrides, templatesWithOverrides, setTemplateOverride, resetTemplateOverride,
   holderOf, holderGroups, filterRowsByHolder, holderSummary,
+  heatLevel, dayOfWeek, deadlinesInYear, yearHeatmap,
 } from '../logic.js';
 import {
   monthsAvailable, anonymizeForAi, buildPrompt, parsePlanReply,
@@ -600,5 +601,71 @@ describe('보유자(가족) 구분', () => {
     const r = validateBackup({ app: 'licensetrack', schema: 1, items: [{ name: '구형', expiresOn: '2027-01-01' }], credits: [] });
     assert.equal(r.ok, true, r.errors.join(' | '));
     assert.equal(holderOf(r.data.items[0]), '');
+  });
+});
+
+describe('연간 달력 히트맵', () => {
+  const today = '2026-11-06';
+
+  test('단계 경계: 0 = 기록 없음, 2 미만 = 1, 5 미만 = 2, 10 미만 = 3, 10 이상 = 4', () => {
+    assert.equal(heatLevel(0), 0);
+    assert.equal(heatLevel(0.5), 1);
+    assert.equal(heatLevel(2), 2);
+    assert.equal(heatLevel(4.5), 2);
+    assert.equal(heatLevel(5), 3);
+    assert.equal(heatLevel(10), 4);
+    assert.equal(heatLevel(undefined), 0);
+  });
+
+  test('요일: 2026-01-01 은 목요일(4), 1970-01-01 은 목요일', () => {
+    assert.equal(dayOfWeek('2026-01-01'), 4);
+    assert.equal(dayOfWeek('1970-01-01'), 4);
+    assert.equal(dayOfWeek('2026-11-08'), 0);
+  });
+
+  test('격자 크기: 평년 365칸, 윤년 366칸, 53주 열', () => {
+    const h = yearHeatmap({ year: 2026, items: [], credits: [], today });
+    assert.equal(h.days.length, 365);
+    assert.equal(h.cols, 53);
+    assert.deepEqual(h.days[0], { date: '2026-01-01', col: 0, row: 4, hours: 0, level: 0, deadlines: [], isToday: false });
+    assert.equal(h.days[364].date, '2026-12-31');
+    assert.equal(h.days[364].col, 52);
+    assert.equal(yearHeatmap({ year: 2028, items: [], credits: [], today }).days.length, 366);
+  });
+
+  test('같은 날 학점은 합산하고, 다른 해 기록은 무시, 단계에 반영', () => {
+    const credits = [
+      normalizeCredit({ itemId: 'x', date: '2026-03-01', hours: 2 }),
+      normalizeCredit({ itemId: 'x', date: '2026-03-01', hours: 1 }),
+      normalizeCredit({ itemId: 'x', date: '2025-03-01', hours: 9 }),
+    ];
+    const h = yearHeatmap({ year: 2026, items: [], credits, today });
+    const mar1 = h.days.find((d) => d.date === '2026-03-01');
+    assert.equal(mar1.hours, 3);
+    assert.equal(mar1.level, 2);
+    assert.equal(h.creditDays, 1);
+    assert.equal(h.totalHours, 3);
+  });
+
+  test('마감일: 만료일 1회, 주기 반복 날짜 포함, 윤년 말일 보정', () => {
+    const cyc = normalizeItem({ id: 'a', name: '주기형', expiresOn: '2026-12-31', cycleYears: 3, requiredCredits: 8 });
+    assert.deepEqual(deadlinesInYear([cyc], 2026).map((d) => d.date), ['2026-12-31']);
+    assert.deepEqual(deadlinesInYear([cyc], 2029).map((d) => d.date), ['2029-12-31']);
+    assert.deepEqual(deadlinesInYear([cyc], 2027), []);
+    // 2028-02-29 만료, 1년 주기: 2026-02-28 이 마감
+    const leap = normalizeItem({ id: 'b', name: '윤년', expiresOn: '2028-02-29', cycleYears: 1, requiredCredits: 8 });
+    assert.deepEqual(deadlinesInYear([leap], 2026).map((d) => d.date), ['2026-02-28']);
+    const once = normalizeItem({ id: 'c', name: '주기없음', expiresOn: '2026-05-05' });
+    assert.equal(deadlinesInYear([once], 2026).length, 1);
+    const hm = yearHeatmap({ year: 2026, items: [once], credits: [], today });
+    const may5 = hm.days.find((d) => d.date === '2026-05-05');
+    assert.equal(may5.deadlines.length, 1);
+    assert.equal(hm.deadlines.length, 1);
+  });
+
+  test('만료일이 없고 발급일+주기만 있으면 파생 만료일을 마감으로 사용', () => {
+    const derived = normalizeItem({ id: 'd', name: '파생', issuedOn: '2020-03-01', cycleYears: 3 });
+    // 발급 2020-03-01 + 3년 - 1일 = 2023-02-28, 다음 2026-02-28
+    assert.deepEqual(deadlinesInYear([derived], 2026).map((d) => d.date), ['2026-02-28']);
   });
 });

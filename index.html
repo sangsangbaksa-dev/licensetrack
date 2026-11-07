@@ -121,6 +121,25 @@
           <h3 class="sub-head">마감 타임라인 (365일 이내)</h3>
           <ol id="timeline" class="timeline"></ol>
           <p id="timeline-empty" class="muted" hidden>365일 이내 마감이 없습니다.</p>
+          <section class="card heat" aria-labelledby="heat-title">
+            <div class="heat-head">
+              <h3 id="heat-title">연간 달력: 이수 학점과 마감일</h3>
+              <div class="heat-nav">
+                <button class="btn btn-secondary btn-small" type="button" id="heat-prev" aria-label="이전 해">‹ 이전 해</button>
+                <span id="heat-year" class="heat-year" aria-live="polite"></span>
+                <button class="btn btn-secondary btn-small" type="button" id="heat-next" aria-label="다음 해">다음 해 ›</button>
+              </div>
+            </div>
+            <p class="muted" id="heat-summary"></p>
+            <div class="heat-scroll" id="heat-wrap"></div>
+            <div class="heat-legend" aria-hidden="true">
+              <span>기록 없음</span><span class="heat-sw h1"></span><span class="heat-sw h2"></span><span class="heat-sw h3"></span><span class="heat-sw h4"></span><span>하루 10시간 이상</span>
+              <span class="heat-dot-key"></span><span>마감일</span>
+            </div>
+            <h3 class="sub-head">이 해의 마감일</h3>
+            <ul class="heat-dl-list" id="heat-dl-list"></ul>
+            <p id="heat-dl-empty" class="muted" hidden>이 해에 마감일이 없습니다.</p>
+          </section>
           <p class="disclaimer">이 화면은 입력한 값으로 계산한 참고 자료이며 법률, 세무, 재무 자문이 아닙니다. 실제 기한과 요건은 발급 기관에서 확인하세요.</p>
         </section>
 
