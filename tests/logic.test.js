@@ -8,6 +8,7 @@ import {
   csvCell, buildCreditsCsv,
   normalizeItem, normalizeCredit, ValidationError,
   buildBackup, validateBackup, buildPrintRows,
+  normalizeTemplateOverrides, templatesWithOverrides, setTemplateOverride, resetTemplateOverride,
 } from '../logic.js';
 import {
   monthsAvailable, anonymizeForAi, buildPrompt, parsePlanReply,
@@ -470,5 +471,73 @@ describe('설정 상수', () => {
     for (const t of CONSTANTS.templates.slice(1)) {
       assert.match(t.label, /예시/);
     }
+  });
+});
+
+describe('예시 템플릿 편집', () => {
+  test('기본값과 같은 값은 저장하지 않고, 다른 값만 overrides 에 남긴다', () => {
+    const r = normalizeTemplateOverrides({
+      nurse: { cycleYears: 3, requiredCredits: 8 },
+      cpe: { cycleYears: 1, requiredCredits: 20 },
+    });
+    assert.deepEqual(Object.keys(r), ['cpe']);
+    assert.deepEqual(r.cpe, { cycleYears: 1, requiredCredits: 20 });
+  });
+
+  test('알 수 없는 템플릿 ID, 범위 밖 주기, 소수 주기, 음수 학점 거부', () => {
+    assert.throws(() => normalizeTemplateOverrides({ nope: { cycleYears: 2 } }), /알 수 없는 템플릿/);
+    assert.throws(() => normalizeTemplateOverrides({ nurse: { cycleYears: 51, requiredCredits: 8 } }), ValidationError);
+    assert.throws(() => normalizeTemplateOverrides({ nurse: { cycleYears: 2.5, requiredCredits: 8 } }), ValidationError);
+    assert.throws(() => normalizeTemplateOverrides({ nurse: { cycleYears: 3, requiredCredits: -1 } }), ValidationError);
+    assert.throws(() => normalizeTemplateOverrides([]), ValidationError);
+  });
+
+  test('필요 학점을 비우면 null (기준 없음)으로 저장', () => {
+    const r = normalizeTemplateOverrides({ nurse: { cycleYears: 3, requiredCredits: '' } });
+    assert.deepEqual(r.nurse, { cycleYears: 3, requiredCredits: null });
+  });
+
+  test('템플릿 목록: 수정 여부 표시, 라벨의 "예시" 표기는 유지', () => {
+    const list = templatesWithOverrides({ nurse: { cycleYears: 4, requiredCredits: 10 } });
+    const nurse = list.find((t) => t.id === 'nurse');
+    assert.equal(nurse.cycleYears, 4);
+    assert.equal(nurse.requiredCredits, 10);
+    assert.equal(nurse.edited, true);
+    assert.equal(list.find((t) => t.id === 'cpe').edited, false);
+    for (const t of list) assert.match(t.label, /예시/);
+    assert.equal(list.some((t) => t.id === 'blank'), false);
+  });
+
+  test('setTemplateOverride 는 입력 객체를 바꾸지 않고, 기본값으로 되돌리면 항목이 사라짐', () => {
+    const before = { };
+    const after = setTemplateOverride(before, 'safety', { cycleYears: 2, requiredCredits: 30 });
+    assert.deepEqual(before, {});
+    assert.deepEqual(after.safety, { cycleYears: 2, requiredCredits: 30 });
+    const back = setTemplateOverride(after, 'safety', { cycleYears: 2, requiredCredits: 24 });
+    assert.deepEqual(back, {});
+    assert.deepEqual(resetTemplateOverride(after, 'safety'), {});
+  });
+
+  test('백업 왕복에 템플릿 수정값이 포함되고, 잘못된 값은 템플릿 설정 오류로 보고', () => {
+    const items = [normalizeItem({ id: 'it1', name: '간호', expiresOn: '2027-12-31', cycleYears: 4, requiredCredits: 10 })];
+    const raw = buildBackup({
+      items, credits: [], leads: [30], templates: { nurse: { cycleYears: 4, requiredCredits: 10 } },
+      now: new Date('2026-11-06T00:00:00Z'),
+    });
+    const ok = validateBackup(JSON.parse(JSON.stringify(raw)));
+    assert.equal(ok.ok, true, ok.errors.join(' | '));
+    assert.deepEqual(ok.data.templates, { nurse: { cycleYears: 4, requiredCredits: 10 } });
+
+    raw.settings.templates = { nurse: { cycleYears: 'many' } };
+    const bad = validateBackup(raw);
+    assert.equal(bad.ok, false);
+    assert.match(bad.errors[0], /템플릿 설정/);
+  });
+
+  test('이전 버전 백업(templates 키 없음)도 그대로 가져옴', () => {
+    const raw = { app: 'licensetrack', schema: 1, settings: { leads: [30] }, items: [], credits: [] };
+    const r = validateBackup(raw);
+    assert.equal(r.ok, true);
+    assert.deepEqual(r.data.templates, {});
   });
 });

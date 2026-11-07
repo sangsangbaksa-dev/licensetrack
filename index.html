@@ -126,7 +126,7 @@
             <div class="field">
               <label for="tpl">예시 템플릿</label>
               <select id="tpl"></select>
-              <p class="hint">선택하면 자격명·기관·주기·필요 학점 칸을 예시 값으로 채웁니다. 모든 값은 수정 가능하며 기관 기준으로 반드시 확인하세요.</p>
+              <p class="hint">선택하면 자격명·기관·주기·필요 학점 칸을 예시 값으로 채웁니다. 예시 값은 아래 편집 칸에서 바꿀 수 있으며, 기관 기준으로 반드시 확인하세요.</p>
             </div>
             <input type="hidden" id="item-id">
             <div class="grid-2">
@@ -178,6 +178,15 @@
               <button class="btn btn-ghost" type="button" id="item-cancel" hidden>수정 취소</button>
             </div>
           </form>
+          <details class="card tpl-editor" id="tpl-editor">
+            <summary>예시 템플릿 값 편집 (주기·필요 학점)</summary>
+            <div class="tpl-body">
+              <p class="warn-note" role="note"><strong>예시 · 확인 필요.</strong> 아래 값은 법령이나 기관 기준이 아니며, 직접 확인해서 고쳐 쓰는 출발점입니다.</p>
+              <p class="hint" id="tpl-asof"></p>
+              <p class="hint">바꾼 값은 이 브라우저와 백업 파일에 저장됩니다. 언제든 기본값으로 되돌릴 수 있습니다.</p>
+              <ul id="tpl-list" class="stack-list"></ul>
+            </div>
+          </details>
           <h3 class="sub-head">등록된 자격</h3>
           <ul id="item-admin" class="stack-list"></ul>
         </section>

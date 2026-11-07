@@ -301,6 +301,15 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-sp
 .rules ul { margin-top: .5rem; }
 .rules li { margin-bottom: .35rem; }
 
+/* 예시 템플릿 편집 */
+.tpl-editor { padding: 0 1.25rem 1.25rem; }
+.tpl-editor > summary { cursor: pointer; font-weight: 700; min-height: 44px; display: flex; align-items: center; }
+.tpl-body { display: grid; gap: .6rem; margin-top: .25rem; }
+.tpl-body > p { margin: 0; }
+.stack-list > li.tpl-row { display: grid; gap: .6rem; }
+.tpl-head { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
+.tpl-row .meta { margin: 0; }
+
 .toast {
   position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%); z-index: 60;
   background: var(--text); color: var(--bg); padding: .65rem 1.1rem; border-radius: 999px;

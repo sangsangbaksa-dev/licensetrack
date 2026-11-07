@@ -494,14 +494,71 @@ export function normalizeCredit(input) {
 }
 
 /* ------------------------------------------------------------------ *
+ * 예시 템플릿 편집 (주기·필요 학점만 사용자가 바꿀 수 있음)
+ * 기본값은 CONSTANTS.templates. 사용자가 바꾼 값만 overrides 에 저장하고,
+ * 기본값과 같아지면 저장하지 않습니다. 라벨의 "예시" 표기는 항상 유지됩니다.
+ * ------------------------------------------------------------------ */
+export function templateDefaults() {
+  return CONSTANTS.templates.filter((t) => t.id !== 'blank');
+}
+
+/** 사용자 수정값 검증. 기본값과 같은 항목은 버리고, 알 수 없는 템플릿 ID 는 거부 */
+export function normalizeTemplateOverrides(v) {
+  if (v === undefined || v === null) return {};
+  if (typeof v !== 'object' || Array.isArray(v)) throw new ValidationError('템플릿 설정은 객체여야 합니다.');
+  const known = new Map(templateDefaults().map((t) => [t.id, t]));
+  const out = {};
+  for (const id of Object.keys(v)) {
+    const base = known.get(id);
+    if (!base) throw new ValidationError(`알 수 없는 템플릿입니다: ${String(id).slice(0, 20)}`);
+    const o = v[id];
+    if (!o || typeof o !== 'object' || Array.isArray(o)) throw new ValidationError(`${base.label}: 값 형식이 올바르지 않습니다.`);
+    const cycleYears = numField(o.cycleYears ?? base.cycleYears, `${base.label} 주기`,
+      { min: 0, max: CONSTANTS.limits.cycleYears, int: true });
+    const rq = 'requiredCredits' in o ? o.requiredCredits : base.requiredCredits;
+    const requiredCredits = rq === null || rq === '' ? null
+      : numField(rq, `${base.label} 필요 학점`, { min: 0, max: CONSTANTS.limits.requiredCredits });
+    if (cycleYears !== base.cycleYears || requiredCredits !== base.requiredCredits) {
+      out[id] = { cycleYears, requiredCredits };
+    }
+  }
+  return out;
+}
+
+/** 기본값에 사용자 수정값을 덮어쓴 템플릿 목록. edited 는 수정 여부 */
+export function templatesWithOverrides(overrides = {}) {
+  return templateDefaults().map((t) => {
+    const o = overrides[t.id];
+    return {
+      ...t,
+      cycleYears: o ? o.cycleYears : t.cycleYears,
+      requiredCredits: o ? o.requiredCredits : t.requiredCredits,
+      edited: Boolean(o),
+    };
+  });
+}
+
+/** 한 템플릿의 값을 바꾼 새 overrides 객체를 돌려줌 (검증 포함, 입력 객체는 바꾸지 않음) */
+export function setTemplateOverride(overrides, id, values) {
+  return normalizeTemplateOverrides({ ...overrides, [id]: values });
+}
+
+/** 한 템플릿을 기본값으로 되돌린 새 overrides 객체 */
+export function resetTemplateOverride(overrides, id) {
+  const next = { ...overrides };
+  delete next[id];
+  return next;
+}
+
+/* ------------------------------------------------------------------ *
  * 백업 (JSON) 생성 / 검증
  * ------------------------------------------------------------------ */
-export function buildBackup({ items, credits, leads, now = new Date() }) {
+export function buildBackup({ items, credits, leads, templates = {}, now = new Date() }) {
   return {
     app: 'licensetrack',
     schema: CONSTANTS.appVersion,
     exportedAt: now.toISOString(),
-    settings: { leads },
+    settings: { leads, templates },
     items,
     credits,
   };
@@ -530,6 +587,12 @@ export function validateBackup(raw) {
   } catch (e) {
     errors.push(`알림 설정: ${e.message}`);
   }
+  let templates = {};
+  try {
+    if (raw.settings && raw.settings.templates !== undefined) templates = normalizeTemplateOverrides(raw.settings.templates);
+  } catch (e) {
+    errors.push(`템플릿 설정: ${e.message}`);
+  }
 
   const items = [];
   const ids = new Set();
@@ -556,7 +619,7 @@ export function validateBackup(raw) {
   });
 
   if (errors.length) return { ok: false, errors: errors.slice(0, 20), data: null };
-  return { ok: true, errors: [], data: { items, credits, leads } };
+  return { ok: true, errors: [], data: { items, credits, leads, templates } };
 }
 
 /* ------------------------------------------------------------------ *

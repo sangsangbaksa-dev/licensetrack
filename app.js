@@ -3,6 +3,7 @@ import {
   CONSTANTS, todayStr, buildDashboard, dueReminders, normalizeLeads, normalizeItem, normalizeCredit,
   cycleStatus, deadlinesForItem, effectiveExpiry, BUCKET_LABEL, BUCKET_ORDER, buildIcs, icsDstamp,
   buildBackup, validateBackup, buildCreditsCsv, buildPrintRows, newId, ValidationError,
+  templatesWithOverrides, setTemplateOverride, resetTemplateOverride,
 } from './logic.js';
 import {
   AI_LIMITS, planEligibility, anonymizeForAi, buildPrompt, parsePlanReply, fallbackPlan,
@@ -18,6 +19,7 @@ const state = {
   items: [],
   credits: [],
   leads: [...CONSTANTS.defaultLeadDays],
+  templates: {},
   creditItemId: null,
   plan: null,
   storageOk: true,
@@ -101,6 +103,7 @@ function loadState() {
       state.items = v.data.items;
       state.credits = v.data.credits;
       state.leads = v.data.leads;
+      state.templates = v.data.templates;
     } else {
       throw new Error(v.errors[0]);
     }
@@ -116,7 +119,7 @@ function loadState() {
 function saveState() {
   try {
     localStorage.setItem(DATA_KEY, JSON.stringify(buildBackup({
-      items: state.items, credits: state.credits, leads: state.leads, now: new Date(),
+      items: state.items, credits: state.credits, leads: state.leads, templates: state.templates, now: new Date(),
     })));
     state.storageOk = true;
     return true;
@@ -285,12 +288,77 @@ function notifyDue(due) {
 }
 
 /* ---------- 자격 관리 ---------- */
-function setupTemplates() {
+function effectiveTemplates() {
+  return templatesWithOverrides(state.templates);
+}
+
+function renderTemplateOptions() {
   const sel = $('#tpl');
-  sel.replaceChildren(...CONSTANTS.templates.map((t) => el('option', { value: t.id, text: t.label })));
-  sel.addEventListener('change', () => {
-    const t = CONSTANTS.templates.find((x) => x.id === sel.value);
-    if (!t || t.id === 'blank') return;
+  const keep = sel.value || 'blank';
+  sel.replaceChildren(
+    el('option', { value: 'blank', text: '직접 입력' }),
+    ...effectiveTemplates().map((t) => el('option', { value: t.id, text: `${t.label}${t.edited ? ' (수정됨)' : ''}` })));
+  sel.value = keep;
+}
+
+function renderTemplateEditor() {
+  $('#tpl-list').replaceChildren(...effectiveTemplates().map((t) => {
+    const cy = `tpl-cy-${t.id}`;
+    const rq = `tpl-rq-${t.id}`;
+    return el('li', { class: 'tpl-row' },
+      el('div', { class: 'tpl-head' },
+        el('strong', { text: t.name }),
+        el('span', { class: 'badge b-d90', text: '예시 · 확인 필요' }),
+        t.edited ? el('span', { class: 'badge b-none', text: '사용자 수정값' }) : null),
+      el('p', { class: 'meta', text: `기본 예시: ${t.cycleYears}년 주기 · ${t.requiredCredits === null ? '기준 없음' : `${t.requiredCredits}시간`}` }),
+      el('div', { class: 'grid-2' },
+        el('div', { class: 'field' },
+          el('label', { for: cy, text: '갱신 주기 (년, 0이면 없음)' }),
+          el('input', { id: cy, type: 'number', min: '0', max: String(CONSTANTS.limits.cycleYears), step: '1', inputmode: 'numeric', value: String(t.cycleYears) })),
+        el('div', { class: 'field' },
+          el('label', { for: rq, text: '주기당 필요 학점·시간 (빈 칸이면 기준 없음)' }),
+          el('input', { id: rq, type: 'text', inputmode: 'decimal', value: t.requiredCredits === null ? '' : String(t.requiredCredits) }))),
+      el('p', { class: 'form-error', id: `tpl-err-${t.id}`, role: 'alert', hidden: true }),
+      el('div', { class: 'actions' },
+        el('button', { class: 'btn btn-secondary btn-small', type: 'button', 'data-save': t.id, text: '이 값 저장' }),
+        t.edited ? el('button', { class: 'btn btn-ghost btn-small', type: 'button', 'data-reset': t.id, text: '기본값으로' }) : null));
+  }));
+}
+
+function onTemplateEditClick(e) {
+  const btn = e.target.closest('button[data-save], button[data-reset]');
+  if (!btn) return;
+  const resetId = btn.dataset.reset;
+  const id = resetId || btn.dataset.save;
+  const errNode = $(`#tpl-err-${id}`);
+  try {
+    if (resetId) {
+      state.templates = resetTemplateOverride(state.templates, id);
+    } else {
+      state.templates = setTemplateOverride(state.templates, id, {
+        cycleYears: $(`#tpl-cy-${id}`).value,
+        requiredCredits: $(`#tpl-rq-${id}`).value.trim(),
+      });
+    }
+  } catch (err) {
+    if (!(err instanceof ValidationError)) throw err;
+    errNode.textContent = err.message;
+    errNode.hidden = false;
+    return;
+  }
+  saveState();
+  renderTemplateOptions();
+  renderTemplateEditor();
+  toast(resetId ? '기본 예시 값으로 되돌렸습니다.' : '예시 값을 저장했습니다. 기관 기준으로 확인하세요.');
+}
+
+function setupTemplates() {
+  renderTemplateOptions();
+  renderTemplateEditor();
+  $('#tpl-list').addEventListener('click', onTemplateEditClick);
+  $('#tpl').addEventListener('change', () => {
+    const t = effectiveTemplates().find((x) => x.id === $('#tpl').value);
+    if (!t) return;
     $('#f-name').value = t.name;
     $('#f-issuer').value = t.issuer;
     $('#f-cycle').value = String(t.cycleYears);
@@ -625,10 +693,13 @@ async function onImportChange(e) {
   state.items = v.data.items;
   state.credits = v.data.credits;
   state.leads = v.data.leads;
+  state.templates = v.data.templates;
   state.creditItemId = null;
   saveState();
   e.target.value = '';
   msg.append(el('p', { text: `불러왔습니다: 자격 ${v.data.items.length}개, 학점 기록 ${v.data.credits.length}건.` }));
+  renderTemplateOptions();
+  renderTemplateEditor();
   renderItemAdmin();
   renderDashboard();
   renderPrint();
@@ -658,8 +729,11 @@ function onResetClick() {
   state.items = [];
   state.credits = [];
   state.leads = [...CONSTANTS.defaultLeadDays];
+  state.templates = {};
   state.creditItemId = null;
   try { localStorage.removeItem(DATA_KEY); } catch { /* 무시 */ }
+  renderTemplateOptions();
+  renderTemplateEditor();
   resetItemForm();
   renderAll();
   toast('모든 데이터를 삭제했습니다.');
@@ -853,6 +927,7 @@ function init() {
 
   loadState();
   renderRules();
+  $('#tpl-asof').textContent = CONSTANTS.기준;
   setupTabs();
   setupTemplates();
   renderAll();
