@@ -2,7 +2,7 @@
 import {
   CONSTANTS, todayStr, buildDashboard, dueReminders, normalizeLeads, normalizeItem, normalizeCredit,
   cycleStatus, deadlinesForItem, effectiveExpiry, BUCKET_LABEL, BUCKET_ORDER, buildIcs, icsDstamp,
-  buildBackup, validateBackup, buildCreditsCsv, buildPrintRows, newId, ValidationError,
+  buildBackup, validateBackup, buildCreditsCsv, buildPrintRows, buildStatusCsv, newId, ValidationError,
   templatesWithOverrides, setTemplateOverride, resetTemplateOverride,
   holderOf, holderGroups, holderSummary, yearHeatmap,
   LEAD_PRESETS, leadPresetId, upcomingAlerts, duplicatesFor, findDuplicateGroups,
@@ -795,6 +795,14 @@ function onBackupClick() {
   download(`licensetrack-backup-${todayStr()}.json`, 'application/json;charset=utf-8', JSON.stringify(data, null, 2));
 }
 
+function onStatusCsvClick() {
+  if (!state.items.length) {
+    toast('저장할 자격 항목이 없습니다.');
+    return;
+  }
+  download(`licensetrack-status-${todayStr()}.csv`, 'text/csv;charset=utf-8', buildStatusCsv(state.items, state.credits, todayStr()));
+}
+
 function onCsvClick() {
   if (!state.credits.length) {
     toast('저장할 학점 기록이 없습니다.');
@@ -1177,6 +1185,7 @@ function init() {
   $('#ics-btn').addEventListener('click', onIcsClick);
   $('#notify-btn').addEventListener('click', onNotifyClick);
   $('#json-btn').addEventListener('click', onBackupClick);
+  $('#status-csv-btn').addEventListener('click', onStatusCsvClick);
   $('#import-file').addEventListener('change', onImportChange);
   $('#print-btn').addEventListener('click', () => { renderPrint(); window.print(); });
   $('#reset-btn').addEventListener('click', onResetClick);

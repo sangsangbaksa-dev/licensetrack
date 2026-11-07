@@ -1044,3 +1044,25 @@ export function buildPrintRows(items, credits, today) {
     status: r.cycle?.status || 'no-req',
   }));
 }
+
+/* ------------------------------------------------------------------ *
+ * 자격 현황 CSV (항목별 한 줄). 인쇄용 행(buildPrintRows)과 같은 계산을 씁니다.
+ * 수식 주입 방지는 csvCell이 맡고, BOM과 CRLF는 학점 CSV와 같습니다.
+ * ------------------------------------------------------------------ */
+export const STATUS_CSV_HEADER = ['자격명', '보유자', '발급 기관', '만료일', '남은 일수', '상태', '주기 시작', '필요 학점', '이수 학점'];
+
+export function buildStatusCsv(items, credits, today) {
+  const rows = buildPrintRows(items, credits, today).map((r) => [
+    r.name,
+    r.holder || '미지정',
+    r.issuer,
+    r.expiry === '-' ? '' : r.expiry, // '-'는 수식 중화 대상이 되므로 빈 칸으로 쓴다
+    r.daysLeft ?? '',
+    r.bucketLabel,
+    r.cycleStart === '-' ? '' : r.cycleStart,
+    r.required ?? '',
+    r.earned ?? '',
+  ]);
+  return '\uFEFF' + [STATUS_CSV_HEADER, ...rows].map((r) => r.map(csvCell).join(',')).join('\r\n') + '\r\n';
+}
+

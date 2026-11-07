@@ -7,7 +7,7 @@ import {
   foldLine, icsText, buildIcs, utf8Length,
   csvCell, buildCreditsCsv,
   normalizeItem, normalizeCredit, ValidationError,
-  buildBackup, validateBackup, buildPrintRows,
+  buildBackup, validateBackup, buildPrintRows, buildStatusCsv, STATUS_CSV_HEADER,
   normalizeTemplateOverrides, templatesWithOverrides, setTemplateOverride, resetTemplateOverride,
   holderOf, holderGroups, filterRowsByHolder, holderSummary,
   heatLevel, dayOfWeek, deadlinesInYear, yearHeatmap,
@@ -903,3 +903,33 @@ describe('증명 요약 (인쇄용)', () => {
     assert.deepEqual(c.lines.map((x) => x.hours), [2]);
   });
 });
+
+describe('자격 현황 CSV', () => {
+  const today = '2026-11-06';
+  test('항목마다 한 줄, BOM과 CRLF, 보유자 미지정은 "미지정"', () => {
+    const items = [
+      normalizeItem({ id: 'it1', name: '간호', issuer: '보건복지부', expiresOn: '2027-12-31', cycleYears: 3, requiredCredits: 8 }),
+      normalizeItem({ id: 'it2', name: '안전관리자', issuer: '기관, 본부', expiresOn: '2026-12-01', cycleYears: 3, requiredCredits: 0 }),
+    ];
+    const csv = buildStatusCsv(items, [], today);
+    assert.ok(csv.startsWith('\uFEFF' + STATUS_CSV_HEADER.join(',')));
+    assert.ok(csv.endsWith('\r\n'));
+    const lines = csv.slice(1).split('\r\n').filter(Boolean);
+    assert.equal(lines.length, 3); // 헤더 + 항목 2
+    assert.match(lines[1], /^안전관리자,미지정,"기관, 본부",2026-12-01,25,/);
+    assert.ok(!csv.includes("'-"), '빈 칸 자리에 - 가 들어가면 수식 중화 때문에 깨진다');
+  });
+
+  test('수식으로 시작하는 값은 앞에 작은따옴표를 붙여 중화한다', () => {
+    const items = [normalizeItem({ id: 'it1', name: '=HYPERLINK("x")', issuer: '+기관', expiresOn: '2027-12-31' })];
+    const lines = buildStatusCsv(items, [], today).slice(1).split('\r\n');
+    assert.ok(lines[1].startsWith("'=HYPERLINK(\"\"x\"\")") || lines[1].startsWith("\"'=HYPERLINK"));
+    assert.ok(lines[1].includes("'+기관"));
+  });
+
+  test('빈 목록이면 헤더만 나온다', () => {
+    const lines = buildStatusCsv([], [], today).slice(1).split('\r\n').filter(Boolean);
+    assert.deepEqual(lines, [STATUS_CSV_HEADER.join(',')]);
+  });
+});
+

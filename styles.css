@@ -482,3 +482,6 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-sp
   .actions .btn { width: 100%; }
   .topbar .btn { width: auto; }
 }
+
+/* 2차 정리: 키보드 포커스를 눈에 띄게 */
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
