@@ -4,7 +4,7 @@ import {
   cycleStatus, deadlinesForItem, effectiveExpiry, BUCKET_LABEL, BUCKET_ORDER, buildIcs, icsDstamp,
   buildBackup, validateBackup, buildCreditsCsv, buildPrintRows, buildStatusCsv, newId, ValidationError,
   templatesWithOverrides, setTemplateOverride, resetTemplateOverride,
-  holderOf, holderGroups, holderSummary, yearHeatmap,
+  holderOf, holderGroups, holderSummary, holderLabel, yearHeatmap,
   LEAD_PRESETS, leadPresetId, upcomingAlerts, duplicatesFor, findDuplicateGroups,
   importCreditsCsv, CSV_LIMITS, buildCertificates,
 } from './logic.js';
@@ -12,6 +12,9 @@ import {
   AI_LIMITS, planEligibility, anonymizeForAi, buildPrompt, parsePlanReply, fallbackPlan,
   monthLabels, isPlausibleAnthropicKey,
 } from './ai.js';
+import { t, setLang, detectLang, applyI18n, langSelect, readSavedLang, writeSavedLang, localeTag } from './i18n.js';
+
+setLang(detectLang(readSavedLang()));
 
 const DATA_KEY = 'licensetrack-data';
 const AI_KEY = 'licensetrack-ai-key';
@@ -51,29 +54,30 @@ function el(tag, props = {}, ...kids) {
   return n;
 }
 
-const fmt = (n) => Number(n).toLocaleString('ko-KR', { maximumFractionDigits: 2 });
+const fmt = (n) => Number(n).toLocaleString(localeTag(), { maximumFractionDigits: 2 });
 
 function ddayText(d) {
-  if (d === null || d === undefined) return '만료일 없음';
-  if (d < 0) return `만료 ${-d}일 지남`;
-  if (d === 0) return '오늘 만료';
-  return `D-${d}`;
+  if (d === null || d === undefined) return t('a.dday.none');
+  if (d < 0) return t('a.dday.past', { n: -d });
+  if (d === 0) return t('a.dday.today');
+  return t('a.dday.ahead', { n: d });
 }
 
-const STATUS = {
-  done: ['이수 완료', 's-done', 'is-done'],
-  'on-track': ['페이스 순조', 's-on', ''],
-  'at-risk': ['현재 페이스로 부족 예상', 's-risk', 'is-risk'],
-  overdue: ['기한 지나 미달', 's-over', 'is-over'],
-  'no-req': ['학점 기준 없음', 's-none', ''],
+const STATUS_KEYS = {
+  done: ['a.st.done', 's-done', 'is-done'],
+  'on-track': ['a.st.on', 's-on', ''],
+  'at-risk': ['a.st.risk', 's-risk', 'is-risk'],
+  overdue: ['a.st.over', 's-over', 'is-over'],
+  'no-req': ['a.st.none', 's-none', ''],
 };
+const statusLabel = (s) => t(STATUS_KEYS[s][0]);
 
 function toast(msg) {
-  const t = $('#toast');
-  t.textContent = msg;
-  t.hidden = false;
+  const tn = $('#toast');
+  tn.textContent = msg;
+  tn.hidden = false;
   clearTimeout(toast._t);
-  toast._t = setTimeout(() => { t.hidden = true; }, 3200);
+  toast._t = setTimeout(() => { tn.hidden = true; }, 3200);
 }
 
 function download(name, type, content) {
@@ -118,7 +122,7 @@ function loadState() {
     try { localStorage.setItem(`${DATA_KEY}-corrupt`, raw); } catch { /* 무시 */ }
     state.items = [];
     state.credits = [];
-    toast('저장된 데이터를 읽지 못해 빈 상태로 시작합니다. 이전 내용은 보관되었습니다.');
+    toast(t('a.loadCorrupt'));
   }
 }
 
@@ -131,7 +135,7 @@ function saveState() {
     return true;
   } catch {
     state.storageOk = false;
-    toast('브라우저 저장소에 쓸 수 없습니다. 백업 파일을 저장해 두세요.');
+    toast(t('a.saveFail'));
     return false;
   }
 }
@@ -145,11 +149,11 @@ const TABS = ['dashboard', 'items', 'credits', 'alerts', 'backup', 'ai'];
 
 function activateTab(name, { focus = false } = {}) {
   if (!TABS.includes(name)) return;
-  for (const t of document.querySelectorAll('[role="tab"]')) {
-    const on = t.dataset.tab === name;
-    t.setAttribute('aria-selected', on ? 'true' : 'false');
-    t.tabIndex = on ? 0 : -1;
-    if (on && focus) t.focus();
+  for (const tb of document.querySelectorAll('[role="tab"]')) {
+    const on = tb.dataset.tab === name;
+    tb.setAttribute('aria-selected', on ? 'true' : 'false');
+    tb.tabIndex = on ? 0 : -1;
+    if (on && focus) tb.focus();
   }
   for (const p of document.querySelectorAll('.panel')) p.hidden = p.id !== `panel-${name}`;
   if (name === 'alerts') renderAlerts();
@@ -162,9 +166,9 @@ function activateTab(name, { focus = false } = {}) {
 
 function setupTabs() {
   const tabs = [...document.querySelectorAll('[role="tab"]')];
-  tabs.forEach((t, i) => {
-    t.addEventListener('click', () => activateTab(t.dataset.tab));
-    t.addEventListener('keydown', (e) => {
+  tabs.forEach((tb, i) => {
+    tb.addEventListener('click', () => activateTab(tb.dataset.tab));
+    tb.addEventListener('keydown', (e) => {
       let j = null;
       if (e.key === 'ArrowRight') j = (i + 1) % tabs.length;
       if (e.key === 'ArrowLeft') j = (i - 1 + tabs.length) % tabs.length;
@@ -190,8 +194,8 @@ function renderHolderControls() {
   if (state.holderFilter !== null && !groups.some((g) => g.holder === state.holderFilter)) state.holderFilter = null;
   const sel = $('#holder-filter');
   sel.replaceChildren(
-    el('option', { value: 'all', text: `전체 (${state.items.length}개)` }),
-    ...groups.map((g) => el('option', { value: `h:${g.holder}`, text: `${g.label} (${g.count}개)` })));
+    el('option', { value: 'all', text: t('a.holderAll', { n: state.items.length }) }),
+    ...groups.map((g) => el('option', { value: `h:${g.holder}`, text: t('a.holderOpt', { label: g.label, n: g.count }) })));
   sel.value = state.holderFilter === null ? 'all' : `h:${state.holderFilter}`;
   $('#holder-list').replaceChildren(...groups.filter((g) => g.holder !== '').map((g) => el('option', { value: g.holder })));
 }
@@ -206,8 +210,8 @@ function renderHolderSummary(rows) {
       onclick: () => { state.holderFilter = s.holder; renderDashboard(); },
     },
     el('strong', { text: s.label }),
-    el('span', { class: 'meta', text: `자격 ${s.total}개 · 만료 ${s.expired} · 30일 이내 ${s.d30} · 90일 이내 ${s.d90}${s.atRisk ? ` · 기준 미달 예상 ${s.atRisk}` : ''}` }),
-    el('span', { class: 'meta', text: s.next ? `다음 마감 ${s.next.date} · ${s.next.name}` : '오늘 이후 마감 없음' })))));
+    el('span', { class: 'meta', text: t('a.hs.line', { total: s.total, expired: s.expired, d30: s.d30, d90: s.d90 }) + (s.atRisk ? t('a.hs.risk', { n: s.atRisk }) : '') }),
+    el('span', { class: 'meta', text: s.next ? t('a.hs.next', { date: s.next.date, name: s.next.name }) : t('a.hs.none') })))));
 }
 
 function renderDashboard() {
@@ -218,7 +222,7 @@ function renderDashboard() {
     ? full
     : buildDashboard(state.items.filter((i) => holderOf(i) === state.holderFilter), state.credits, today);
   renderHolderSummary(full.rows);
-  $('#today-label').textContent = `오늘 ${today} 기준으로 계산합니다.`;
+  $('#today-label').textContent = t('a.todayLabel', { d: today });
 
   $('#counts').replaceChildren(...BUCKET_ORDER.map((b) =>
     el('li', {}, el('span', { class: `badge b-${b}`, text: BUCKET_LABEL[b] }), el('strong', { text: String(dash.counts[b]) }))));
@@ -229,11 +233,11 @@ function renderDashboard() {
     banner.hidden = false;
     banner.className = 'alert' + (due.some((d) => d.expired) ? ' alert-danger' : '');
     banner.replaceChildren(
-      el('strong', { text: `알림 기간 안에 든 항목이 ${due.length}개 있습니다.` }),
+      el('strong', { text: t('a.dueBanner', { n: due.length }) }),
       el('ul', {}, due.map((d) => el('li', {
         text: d.expired
-          ? `${d.name}: 만료일이 ${-d.daysLeft}일 지났습니다.`
-          : `${d.name}: ${d.daysLeft === 0 ? '오늘 만료' : `${d.daysLeft}일 남음`}${d.lead ? ` (${d.lead}일 전 알림 구간)` : ''}`,
+          ? t('a.dueExpired', { name: d.name, n: -d.daysLeft })
+          : `${d.name}: ${d.daysLeft === 0 ? t('a.dday.today') : t('a.dueLeft', { n: d.daysLeft })}${d.lead ? t('a.dueLead', { n: d.lead }) : ''}`,
       }))),
     );
     notifyDue(due);
@@ -246,10 +250,10 @@ function renderDashboard() {
   $('#empty-dashboard').hidden = dash.rows.length > 0;
 
   const tl = dash.timeline;
-  $('#timeline').replaceChildren(...tl.map((t) => el('li', {},
-    el('time', { datetime: t.date, text: t.date }),
-    el('span', { text: t.name }),
-    el('span', { class: 'dday', text: ddayText(t.daysLeft) }))));
+  $('#timeline').replaceChildren(...tl.map((x) => el('li', {},
+    el('time', { datetime: x.date, text: x.date }),
+    el('span', { text: x.name }),
+    el('span', { class: 'dday', text: ddayText(x.daysLeft) }))));
   $('#timeline-empty').hidden = tl.length > 0;
   renderHeatmap();
 }
@@ -257,32 +261,32 @@ function renderDashboard() {
 function renderItemCard(row) {
   const { item, expiry, daysLeft, bucket, cycle } = row;
   const facts = [
-    ['만료일', expiry || '-'],
-    ['남은 기간', ddayText(daysLeft)],
+    [t('a.f.expiry'), expiry || '-'],
+    [t('a.f.left'), ddayText(daysLeft)],
   ];
-  if (cycle && cycle.years) facts.push(['주기 기간', `${cycle.start} ~ ${cycle.end}`, true]);
+  if (cycle && cycle.years) facts.push([t('a.f.cycle'), `${cycle.start} ~ ${cycle.end}`, true]);
   if (cycle && cycle.required !== null) {
-    facts.push(['이수 / 필요', `${fmt(cycle.total)} / ${fmt(cycle.required)}${cycle.carry ? ` (이월 ${fmt(cycle.carry)} 포함)` : ''}`]);
+    facts.push([t('a.f.progress'), `${fmt(cycle.total)} / ${fmt(cycle.required)}${cycle.carry ? t('a.f.carryIn', { n: fmt(cycle.carry) }) : ''}`]);
   }
   if (cycle && cycle.remaining > 0 && cycle.neededPerMonth !== null) {
-    facts.push(['남은 기간 월 필요량', `${fmt(cycle.neededPerMonth)} 학점/개월`]);
+    facts.push([t('a.f.monthly'), t('a.f.monthlyVal', { n: fmt(cycle.neededPerMonth) })]);
   }
-  if (cycle && cycle.projectedShortfall > 0) facts.push(['예상 부족 (현재 페이스)', `${fmt(cycle.projectedShortfall)}`, true]);
+  if (cycle && cycle.projectedShortfall > 0) facts.push([t('a.f.shortfall'), `${fmt(cycle.projectedShortfall)}`, true]);
 
-  const st = cycle ? STATUS[cycle.status] : null;
+  const st = cycle ? STATUS_KEYS[cycle.status] : null;
   const hasProgress = cycle && cycle.required !== null;
   const progress = hasProgress
     ? el('div', {},
       el('div', {
         class: `progress ${st[2]}`,
         role: 'progressbar',
-        'aria-label': `${item.name} 이수 진행률`,
+        'aria-label': t('a.progressAria', { name: item.name }),
         'aria-valuemin': '0',
         'aria-valuemax': '100',
         'aria-valuenow': String(Math.round(cycle.percent)),
       }, el('span', { style: `width:${cycle.percent}%` })),
       el('div', { class: 'progress-label' },
-        el('span', { class: `status-tag ${st[1]}`, text: st[0] }),
+        el('span', { class: `status-tag ${st[1]}`, text: statusLabel(cycle.status) }),
         el('span', { text: `${Math.round(cycle.percent)}%` })))
     : null;
 
@@ -290,14 +294,14 @@ function renderItemCard(row) {
     el('div', { class: 'item-head' },
       el('div', { style: 'min-width:0' },
         el('h3', { text: item.name }),
-        el('p', { text: [holderOf(item), item.issuer, item.cycleYears ? `${item.cycleYears}년 주기` : ''].filter(Boolean).join(' · ') || '발급 기관 미입력' })),
+        el('p', { text: [holderOf(item), item.issuer, item.cycleYears ? t('a.cycleYears', { n: item.cycleYears }) : ''].filter(Boolean).join(' · ') || t('a.noIssuer') })),
       el('span', { class: `badge b-${bucket}`, text: BUCKET_LABEL[bucket] })),
     el('dl', { class: 'facts' }, facts.map(([k, v, wide]) =>
       el('div', { class: wide ? 'wide' : '' }, el('dt', { text: k }), el('dd', { text: v })))),
     progress,
     el('div', { class: 'item-actions' },
-      el('button', { class: 'btn btn-secondary btn-small', type: 'button', onclick: () => openCreditsFor(item.id), text: '학점 기록' }),
-      el('button', { class: 'btn btn-ghost btn-small', type: 'button', onclick: () => startEditItem(item.id), text: '수정' })),
+      el('button', { class: 'btn btn-secondary btn-small', type: 'button', onclick: () => openCreditsFor(item.id), text: t('a.btnCredits') }),
+      el('button', { class: 'btn btn-ghost btn-small', type: 'button', onclick: () => startEditItem(item.id), text: t('common.edit') })),
   );
 }
 
@@ -315,27 +319,27 @@ function renderHeatmap() {
   const today = todayStr();
   const year = state.heatYear;
   const hm = yearHeatmap({ year, items: state.items, credits: state.credits, today });
-  $('#heat-year').textContent = `${year}년`;
+  $('#heat-year').textContent = t('a.yearLabel', { y: year });
   $('#heat-summary').textContent = hm.creditDays
-    ? `${year}년 이수 기록 ${hm.creditDays}일, 합계 ${fmt(hm.totalHours)}시간 · 마감 ${hm.deadlines.length}건`
-    : `${year}년에 기록된 학점이 없습니다. 마감 ${hm.deadlines.length}건.`;
+    ? t('a.heatSummary', { y: year, d: hm.creditDays, h: fmt(hm.totalHours), n: hm.deadlines.length })
+    : t('a.heatEmpty', { y: year, n: hm.deadlines.length });
 
   const pad = 34, top = 20, pitch = 15, size = 12;
   const W = pad + hm.cols * pitch, H = top + 7 * pitch;
   const svg = svgNode('svg', {
     class: 'heat-svg', viewBox: `0 0 ${W} ${H}`, width: W, height: H,
-    role: 'img', 'aria-label': `${year}년 달력. 학점 기록과 마감일은 아래 목록에도 있습니다.`,
+    role: 'img', 'aria-label': t('a.heatAria', { y: year }),
   });
   for (const m of hm.monthMarks) {
-    svg.append(svgNode('text', { x: pad + m.col * pitch, y: 12, class: 'heat-month' }, `${m.month}월`));
+    svg.append(svgNode('text', { x: pad + m.col * pitch, y: 12, class: 'heat-month' }, t('a.monthShort', { m: m.month })));
   }
-  [[1, '월'], [3, '수'], [5, '금']].forEach(([r, t]) => {
-    svg.append(svgNode('text', { x: 0, y: top + r * pitch + size - 2, class: 'heat-wd' }, t));
+  [[1, 'wd1'], [3, 'wd3'], [5, 'wd5']].forEach(([r, key]) => {
+    svg.append(svgNode('text', { x: 0, y: top + r * pitch + size - 2, class: 'heat-wd' }, t(`a.${key}`)));
   });
   for (const d of hm.days) {
     const x = pad + d.col * pitch;
     const y = top + d.row * pitch;
-    const label = `${d.date}: ${d.hours ? `학점 ${fmt(d.hours)}시간` : '기록 없음'}${d.deadlines.length ? ` · 마감 ${d.deadlines.map((x2) => x2.name).join(', ')}` : ''}`;
+    const label = `${d.date}: ${d.hours ? t('a.cellHours', { h: fmt(d.hours) }) : t('a.cellNone')}${d.deadlines.length ? t('a.cellDeadline', { names: d.deadlines.map((x2) => x2.name).join(', ') }) : ''}`;
     const cls = `heat-cell h${d.level}${d.isToday ? ' is-today' : ''}`;
     svg.append(svgNode('rect', { x, y, width: size, height: size, rx: 2, class: cls }, svgNode('title', {}, label)));
     if (d.deadlines.length) {
@@ -368,8 +372,8 @@ function notifyDue(due) {
       seen[key] = todayStr();
       changed = true;
       try {
-        new Notification('licensetrack 마감 알림', {
-          body: d.expired ? `${d.name}: 만료일이 지났습니다.` : `${d.name}: ${d.daysLeft}일 남았습니다.`,
+        new Notification(t('a.notifyTitle'), {
+          body: d.expired ? t('a.notifyExpired', { name: d.name }) : t('a.notifyLeft', { name: d.name, n: d.daysLeft }),
           tag: key,
         });
       } catch { /* 일부 모바일 브라우저는 생성자 호출을 막음 */ }
@@ -387,32 +391,32 @@ function renderTemplateOptions() {
   const sel = $('#tpl');
   const keep = sel.value || 'blank';
   sel.replaceChildren(
-    el('option', { value: 'blank', text: '직접 입력' }),
-    ...effectiveTemplates().map((t) => el('option', { value: t.id, text: `${t.label}${t.edited ? ' (수정됨)' : ''}` })));
+    el('option', { value: 'blank', text: t('tpl.blank.label') }),
+    ...effectiveTemplates().map((tp) => el('option', { value: tp.id, text: `${tp.label}${tp.edited ? t('a.tplEdited') : ''}` })));
   sel.value = keep;
 }
 
 function renderTemplateEditor() {
-  $('#tpl-list').replaceChildren(...effectiveTemplates().map((t) => {
-    const cy = `tpl-cy-${t.id}`;
-    const rq = `tpl-rq-${t.id}`;
+  $('#tpl-list').replaceChildren(...effectiveTemplates().map((tp) => {
+    const cy = `tpl-cy-${tp.id}`;
+    const rq = `tpl-rq-${tp.id}`;
     return el('li', { class: 'tpl-row' },
       el('div', { class: 'tpl-head' },
-        el('strong', { text: t.name }),
-        el('span', { class: 'badge b-d90', text: '예시 · 확인 필요' }),
-        t.edited ? el('span', { class: 'badge b-none', text: '사용자 수정값' }) : null),
-      el('p', { class: 'meta', text: `기본 예시: ${t.cycleYears}년 주기 · ${t.requiredCredits === null ? '기준 없음' : `${t.requiredCredits}시간`}` }),
+        el('strong', { text: tp.name }),
+        el('span', { class: 'badge b-d90', text: t('a.tplBadge') }),
+        tp.edited ? el('span', { class: 'badge b-none', text: t('a.tplUserEdited') }) : null),
+      el('p', { class: 'meta', text: t('a.tplDefault', { y: tp.cycleYears, r: tp.requiredCredits === null ? t('a.noReq') : t('a.hoursOf', { n: tp.requiredCredits }) }) }),
       el('div', { class: 'grid-2' },
         el('div', { class: 'field' },
-          el('label', { for: cy, text: '갱신 주기 (년, 0이면 없음)' }),
-          el('input', { id: cy, type: 'number', min: '0', max: String(CONSTANTS.limits.cycleYears), step: '1', inputmode: 'numeric', value: String(t.cycleYears) })),
+          el('label', { for: cy, text: t('a.tplCycleLabel') }),
+          el('input', { id: cy, type: 'number', min: '0', max: String(CONSTANTS.limits.cycleYears), step: '1', inputmode: 'numeric', value: String(tp.cycleYears) })),
         el('div', { class: 'field' },
-          el('label', { for: rq, text: '주기당 필요 학점·시간 (빈 칸이면 기준 없음)' }),
-          el('input', { id: rq, type: 'text', inputmode: 'decimal', value: t.requiredCredits === null ? '' : String(t.requiredCredits) }))),
-      el('p', { class: 'form-error', id: `tpl-err-${t.id}`, role: 'alert', hidden: true }),
+          el('label', { for: rq, text: t('a.tplReqLabel') }),
+          el('input', { id: rq, type: 'text', inputmode: 'decimal', value: tp.requiredCredits === null ? '' : String(tp.requiredCredits) }))),
+      el('p', { class: 'form-error', id: `tpl-err-${tp.id}`, role: 'alert', hidden: true }),
       el('div', { class: 'actions' },
-        el('button', { class: 'btn btn-secondary btn-small', type: 'button', 'data-save': t.id, text: '이 값 저장' }),
-        t.edited ? el('button', { class: 'btn btn-ghost btn-small', type: 'button', 'data-reset': t.id, text: '기본값으로' }) : null));
+        el('button', { class: 'btn btn-secondary btn-small', type: 'button', 'data-save': tp.id, text: t('a.tplSave') }),
+        tp.edited ? el('button', { class: 'btn btn-ghost btn-small', type: 'button', 'data-reset': tp.id, text: t('a.tplReset') }) : null));
   }));
 }
 
@@ -440,7 +444,7 @@ function onTemplateEditClick(e) {
   saveState();
   renderTemplateOptions();
   renderTemplateEditor();
-  toast(resetId ? '기본 예시 값으로 되돌렸습니다.' : '예시 값을 저장했습니다. 기관 기준으로 확인하세요.');
+  toast(resetId ? t('a.tplResetDone') : t('a.tplSaved'));
 }
 
 function setupTemplates() {
@@ -448,14 +452,14 @@ function setupTemplates() {
   renderTemplateEditor();
   $('#tpl-list').addEventListener('click', onTemplateEditClick);
   $('#tpl').addEventListener('change', () => {
-    const t = effectiveTemplates().find((x) => x.id === $('#tpl').value);
-    if (!t) return;
-    $('#f-name').value = t.name;
-    $('#f-issuer').value = t.issuer;
-    $('#f-cycle').value = String(t.cycleYears);
-    $('#f-required').value = t.requiredCredits === null ? '' : String(t.requiredCredits);
-    $('#f-notes').value = t.note;
-    toast('예시 값을 채웠습니다. 기관 기준에 맞게 고쳐 주세요.');
+    const tp = effectiveTemplates().find((x) => x.id === $('#tpl').value);
+    if (!tp) return;
+    $('#f-name').value = tp.name;
+    $('#f-issuer').value = tp.issuer;
+    $('#f-cycle').value = String(tp.cycleYears);
+    $('#f-required').value = tp.requiredCredits === null ? '' : String(tp.requiredCredits);
+    $('#f-notes').value = tp.note;
+    toast(t('a.tplFilled'));
   });
 }
 
@@ -480,8 +484,8 @@ function resetItemForm() {
   $('#item-form').reset();
   $('#item-id').value = '';
   $('#tpl').value = 'blank';
-  $('#item-form-title').textContent = '새 자격 추가';
-  $('#item-save').textContent = '저장';
+  $('#item-form-title').textContent = t('a.newItemTitle');
+  $('#item-save').textContent = t('common.save');
   $('#item-cancel').hidden = true;
   setError('#item-error', '');
 }
@@ -501,23 +505,23 @@ function startEditItem(id) {
   $('#f-required').value = it.requiredCredits === null ? '' : String(it.requiredCredits);
   $('#f-carry').value = it.carryover ? String(it.carryover) : '';
   $('#f-notes').value = it.notes;
-  $('#item-form-title').textContent = `자격 수정: ${it.name}`;
-  $('#item-save').textContent = '수정 저장';
+  $('#item-form-title').textContent = t('a.editItemTitle', { name: it.name });
+  $('#item-save').textContent = t('a.saveEdit');
   $('#item-cancel').hidden = false;
   $('#f-name').focus();
   $('#item-form').scrollIntoView({ block: 'start' });
 }
 
-const REASON_LABEL = { name: '이름', number: '자격 번호' };
+const reasonLabel = (r) => (r === 'name' ? t('a.reason.name') : t('a.reason.number'));
 
 function renderDuplicateBanner() {
   const groups = findDuplicateGroups(state.items);
   const b = $('#dup-banner');
   b.hidden = groups.length === 0;
   b.replaceChildren(...(groups.length ? [
-    el('strong', { text: `중복 의심 자격 ${groups.length}묶음` }),
+    el('strong', { text: t('a.dupTitle', { n: groups.length }) }),
     el('ul', { class: 'bullets' }, groups.map((g) => el('li', {
-      text: `${g.names.join(' / ')} (${g.reasons.map((r) => REASON_LABEL[r]).join(', ')} 같음). 같은 자격이면 하나만 남기세요.`,
+      text: t('a.dupLine', { names: g.names.join(' / '), reasons: g.reasons.map(reasonLabel).join(', ') }),
     }))),
   ] : []));
 }
@@ -526,19 +530,19 @@ function renderItemAdmin() {
   renderDuplicateBanner();
   const list = $('#item-admin');
   if (!state.items.length) {
-    list.replaceChildren(el('li', { class: 'muted', text: '등록된 자격이 없습니다.' }));
+    list.replaceChildren(el('li', { class: 'muted', text: t('a.noItems') }));
     return;
   }
   list.replaceChildren(...state.items.map((it) => {
     const n = state.credits.filter((c) => c.itemId === it.id).length;
-    const exp = effectiveExpiry(it) || '만료일 없음';
-    const meta = [holderOf(it) ? `보유 ${holderOf(it)}` : null, `만료 ${exp}`, it.cycleYears ? `${it.cycleYears}년 주기` : null, it.requiredCredits !== null ? `필요 ${fmt(it.requiredCredits)}` : null, `기록 ${n}건`]
+    const exp = effectiveExpiry(it) || t('a.noExpiry');
+    const meta = [holderOf(it) ? t('a.metaHolder', { h: holderOf(it) }) : null, t('a.metaExpiry', { d: exp }), it.cycleYears ? t('a.cycleYears', { n: it.cycleYears }) : null, it.requiredCredits !== null ? t('a.metaRequired', { n: fmt(it.requiredCredits) }) : null, t('a.metaRecords', { n }) ]
       .filter(Boolean).join(' · ');
     return el('li', {},
       el('div', { class: 'main' }, el('strong', { text: it.name }), el('p', { class: 'meta', text: meta })),
       el('div', { class: 'item-actions' },
-        el('button', { class: 'btn btn-secondary btn-small', type: 'button', text: '수정', onclick: () => startEditItem(it.id) }),
-        el('button', { class: 'btn btn-danger btn-small', type: 'button', text: '삭제', onclick: () => deleteItem(it.id) })));
+        el('button', { class: 'btn btn-secondary btn-small', type: 'button', text: t('common.edit'), onclick: () => startEditItem(it.id) }),
+        el('button', { class: 'btn btn-danger btn-small', type: 'button', text: t('common.delete'), onclick: () => deleteItem(it.id) })));
   }));
 }
 
@@ -546,7 +550,7 @@ function deleteItem(id) {
   const it = state.items.find((x) => x.id === id);
   if (!it) return;
   const n = state.credits.filter((c) => c.itemId === id).length;
-  if (!confirm(`'${it.name}' 항목과 학점 기록 ${n}건을 삭제할까요?`)) return;
+  if (!confirm(t('a.confirmDeleteItem', { name: it.name, n }))) return;
   state.items = state.items.filter((x) => x.id !== id);
   state.credits = state.credits.filter((c) => c.itemId !== id);
   if (state.creditItemId === id) state.creditItemId = null;
@@ -554,7 +558,7 @@ function deleteItem(id) {
   resetItemForm();
   renderItemAdmin();
   renderDashboard();
-  toast('삭제했습니다.');
+  toast(t('a.deletedToast'));
 }
 
 function onItemSubmit(e) {
@@ -564,13 +568,13 @@ function onItemSubmit(e) {
     const existingId = $('#item-id').value;
     const existing = existingId ? state.items.find((x) => x.id === existingId) : null;
     if (!existing && state.items.length >= CONSTANTS.limits.items) {
-      throw new ValidationError(`자격 항목은 최대 ${CONSTANTS.limits.items}개입니다.`);
+      throw new ValidationError(t('a.maxItems', { n: CONSTANTS.limits.items }));
     }
     const input = readItemForm();
     if (existing) input.createdAt = existing.createdAt;
     const item = normalizeItem(input);
     const dups = duplicatesFor(item, state.items);
-    if (dups.length && !confirm(`비슷한 자격이 이미 있습니다: ${dups.map((d) => d.item.name).join(', ')}. 그래도 저장할까요?`)) {
+    if (dups.length && !confirm(t('a.confirmDup', { names: dups.map((d) => d.item.name).join(', ') }))) {
       return;
     }
     if (existing) {
@@ -582,7 +586,7 @@ function onItemSubmit(e) {
     resetItemForm();
     renderItemAdmin();
     renderDashboard();
-    toast(existing ? '수정했습니다.' : '자격을 추가했습니다.');
+    toast(existing ? t('a.itemUpdated') : t('a.itemAdded'));
   } catch (err) {
     if (err instanceof ValidationError) setError('#item-error', err.message);
     else throw err;
@@ -609,7 +613,7 @@ function renderCredits() {
   const hasItems = state.items.length > 0;
   $('#credit-form').hidden = !hasItems;
   if (!hasItems) {
-    $('#cycle-info').replaceChildren(el('p', { text: '먼저 자격 관리에서 자격을 등록하세요.' }));
+    $('#cycle-info').replaceChildren(el('p', { text: t('a.addItemFirst') }));
     $('#credit-list').replaceChildren();
     $('#credit-empty').hidden = true;
     return;
@@ -621,23 +625,23 @@ function renderCredits() {
   if (!cyc) {
     info.replaceChildren(
       el('h3', { text: it.name }),
-      el('p', { class: 'muted', text: '만료일 또는 발급일과 갱신 주기를 입력하면 주기 기간을 계산합니다.' }));
+      el('p', { class: 'muted', text: t('a.needExpiry') }));
   } else {
-    const st = STATUS[cyc.status];
+    const st = STATUS_KEYS[cyc.status];
     const rows = [];
-    rows.push(el('p', {}, el('strong', { text: '주기 기간: ' }), `${cyc.start ?? '시작일 미정'} ~ ${cyc.end}`));
+    rows.push(el('p', {}, el('strong', { text: t('a.cycleWindow') }), `${cyc.start ?? t('a.startUnknown')} ~ ${cyc.end}`));
     if (cyc.required !== null) {
-      rows.push(el('p', {}, el('strong', { text: '이수 / 필요: ' }), `${fmt(cyc.total)} / ${fmt(cyc.required)}`,
-        cyc.carry ? ` (이월 ${fmt(cyc.carry)} 포함)` : ''));
-      rows.push(el('div', { class: `progress ${st[2]}`, role: 'progressbar', 'aria-label': '이수 진행률', 'aria-valuemin': '0', 'aria-valuemax': '100', 'aria-valuenow': String(Math.round(cyc.percent)) },
+      rows.push(el('p', {}, el('strong', { text: t('a.progressLabel') }), `${fmt(cyc.total)} / ${fmt(cyc.required)}`,
+        cyc.carry ? t('a.f.carryIn', { n: fmt(cyc.carry) }) : ''));
+      rows.push(el('div', { class: `progress ${st[2]}`, role: 'progressbar', 'aria-label': t('a.progressGeneric'), 'aria-valuemin': '0', 'aria-valuemax': '100', 'aria-valuenow': String(Math.round(cyc.percent)) },
         el('span', { style: `width:${cyc.percent}%` })));
-      rows.push(el('p', { class: `status-tag ${st[1]}`, text: `${st[0]}${cyc.neededPerMonth && cyc.remaining > 0 ? ` · 남은 기간 월 ${fmt(cyc.neededPerMonth)} 학점 필요` : ''}` }));
-      if (cyc.projectedShortfall > 0) rows.push(el('p', { class: 'muted', text: `현재 월 페이스 ${fmt(cyc.pace)} 기준 예상 합계 ${fmt(cyc.projectedTotal)}, 예상 부족 ${fmt(cyc.projectedShortfall)}` }));
+      rows.push(el('p', { class: `status-tag ${st[1]}`, text: `${statusLabel(cyc.status)}${cyc.neededPerMonth && cyc.remaining > 0 ? t('a.needMonthly', { n: fmt(cyc.neededPerMonth) }) : ''}` }));
+      if (cyc.projectedShortfall > 0) rows.push(el('p', { class: 'muted', text: t('a.projection', { p: fmt(cyc.pace), t: fmt(cyc.projectedTotal), s: fmt(cyc.projectedShortfall) }) }));
     }
     const cats = Object.entries(cyc.byCategory);
-    if (cats.length) rows.push(el('p', { class: 'muted', text: `분류별: ${cats.map(([k, v]) => `${k} ${fmt(v)}`).join(' · ')}` }));
-    if (cyc.priorEarned) rows.push(el('p', { class: 'muted small', text: `이전 주기 기록 ${fmt(cyc.priorEarned)}은(는) 이번 주기 합계에서 제외했습니다.` }));
-    if (cyc.nextEarned) rows.push(el('p', { class: 'muted small', text: `다음 주기 기록 ${fmt(cyc.nextEarned)}은(는) 이번 합계에서 제외했습니다.` }));
+    if (cats.length) rows.push(el('p', { class: 'muted', text: t('a.byCategory', { list: cats.map(([k, v]) => `${k} ${fmt(v)}`).join(' · ') }) }));
+    if (cyc.priorEarned) rows.push(el('p', { class: 'muted small', text: t('a.priorNote', { n: fmt(cyc.priorEarned) }) }));
+    if (cyc.nextEarned) rows.push(el('p', { class: 'muted small', text: t('a.nextNote', { n: fmt(cyc.nextEarned) }) }));
     info.replaceChildren(el('h3', { text: it.name }), ...rows);
   }
 
@@ -647,15 +651,15 @@ function renderCredits() {
   $('#credit-empty').hidden = list.length > 0;
   $('#credit-list').replaceChildren(...list.map((c) => {
     const tag = !cyc ? null
-      : c.date < (cyc.start || '0000-00-00') ? '이전 주기'
-        : c.date > cyc.end ? '다음 주기' : null;
+      : c.date < (cyc.start || '0000-00-00') ? t('a.tagPrior')
+        : c.date > cyc.end ? t('a.tagNext') : null;
     const meta = [c.course, c.provider, c.category].filter(Boolean).join(' · ');
     return el('li', {},
       el('div', { class: 'main' },
-        el('strong', {}, `${c.date} · ${fmt(c.hours)}시간`, tag ? ` · ${tag}` : ''),
-        el('p', { class: 'meta', text: meta || '과정명 미입력' }),
-        c.memo ? el('p', { class: 'meta', text: `메모: ${c.memo}` }) : null),
-      el('button', { class: 'btn btn-danger btn-small', type: 'button', text: '삭제', onclick: () => deleteCredit(c.id) }));
+        el('strong', {}, `${c.date} · ${t('a.hoursShort', { h: fmt(c.hours) })}`, tag ? ` · ${tag}` : ''),
+        el('p', { class: 'meta', text: meta || t('a.noCourse') }),
+        c.memo ? el('p', { class: 'meta', text: t('a.memoLine', { m: c.memo }) }) : null),
+      el('button', { class: 'btn btn-danger btn-small', type: 'button', text: t('common.delete'), onclick: () => deleteCredit(c.id) }));
   }));
 }
 
@@ -664,9 +668,9 @@ function onCreditSubmit(e) {
   setError('#credit-error', '');
   try {
     const itemId = $('#credit-item').value;
-    if (!state.items.some((i) => i.id === itemId)) throw new ValidationError('자격을 먼저 선택하세요.');
+    if (!state.items.some((i) => i.id === itemId)) throw new ValidationError(t('a.pickItemFirst'));
     if (state.credits.length >= CONSTANTS.limits.credits) {
-      throw new ValidationError(`학점 기록은 최대 ${CONSTANTS.limits.credits}건입니다.`);
+      throw new ValidationError(t('a.maxCredits', { n: CONSTANTS.limits.credits }));
     }
     const c = normalizeCredit({
       itemId,
@@ -685,7 +689,7 @@ function onCreditSubmit(e) {
     $('#c-memo').value = '';
     renderCredits();
     renderDashboard();
-    toast('이수 기록을 추가했습니다.');
+    toast(t('a.creditAdded'));
   } catch (err) {
     if (err instanceof ValidationError) setError('#credit-error', err.message);
     else throw err;
@@ -693,12 +697,12 @@ function onCreditSubmit(e) {
 }
 
 function deleteCredit(id) {
-  if (!confirm('이 학점 기록을 삭제할까요?')) return;
+  if (!confirm(t('a.confirmDeleteCredit'))) return;
   state.credits = state.credits.filter((c) => c.id !== id);
   saveState();
   renderCredits();
   renderDashboard();
-  toast('기록을 삭제했습니다.');
+  toast(t('a.creditDeleted'));
 }
 
 /* ---------- 알림·달력 ---------- */
@@ -709,26 +713,26 @@ function renderAlerts() {
     b.setAttribute('aria-pressed', b.dataset.preset === pid ? 'true' : 'false');
   }
   $('#preset-status').textContent = pid
-    ? `현재 프리셋: ${LEAD_PRESETS.find((p) => p.id === pid).label}`
-    : `직접 설정: ${state.leads.join(', ')}일 전`;
+    ? t('a.presetCurrent', { label: LEAD_PRESETS.find((p) => p.id === pid).label })
+    : t('a.presetCustom', { list: state.leads.join(', ') });
   const today = todayStr();
   const up = upcomingAlerts(buildDashboard(state.items, state.credits, today).rows, state.leads, today);
   $('#upcoming').replaceChildren(...up.map((u) => el('li', {},
     el('time', { datetime: u.alertOn, text: u.alertOn }),
-    el('span', { text: `${u.name} · ${u.lead}일 전 (마감 ${u.deadline})` }))));
+    el('span', { text: t('a.upcomingLine', { name: u.name, n: u.lead, d: u.deadline }) }))));
   $('#upcoming-empty').hidden = up.length > 0;
   const ns = $('#notify-status');
   const btn = $('#notify-btn');
   if (!('Notification' in window)) {
-    ns.textContent = '이 브라우저는 알림을 지원하지 않습니다. 달력 파일을 사용하세요.';
+    ns.textContent = t('a.notifyUnsupported');
     btn.disabled = true;
     return;
   }
   const p = Notification.permission;
   btn.disabled = p !== 'default';
-  ns.textContent = p === 'granted' ? '알림이 허용되어 있습니다. 앱을 열면 알림 기간 안의 항목을 알려 드립니다.'
-    : p === 'denied' ? '브라우저 설정에서 알림이 차단되어 있습니다. 설정에서 허용해 주세요.'
-      : '아직 허용하지 않았습니다.';
+  ns.textContent = p === 'granted' ? t('a.notifyGranted')
+    : p === 'denied' ? t('a.notifyDenied')
+      : t('a.notifyDefault');
 }
 
 function applyLeads(leads, message) {
@@ -745,7 +749,7 @@ function onPresetClick(e) {
   const preset = LEAD_PRESETS.find((p) => p.id === btn.dataset.preset);
   if (!preset) return;
   setError('#lead-error', '');
-  applyLeads(normalizeLeads(preset.leads), `${preset.label} 프리셋을 저장했습니다.`);
+  applyLeads(normalizeLeads(preset.leads), t('a.presetSaved', { label: preset.label }));
 }
 
 function onLeadSubmit(e) {
@@ -755,14 +759,14 @@ function onLeadSubmit(e) {
   const parts = raw === '' ? [] : raw.split(/[,\s]+/).filter(Boolean);
   try {
     const nums = parts.map((p) => {
-      if (!/^\d{1,4}$/.test(p)) throw new Error(`'${p.slice(0, 10)}'은(는) 숫자가 아닙니다.`);
+      if (!/^\d{1,4}$/.test(p)) throw new Error(t('a.notNumber', { v: p.slice(0, 10) }));
       return Number(p);
     });
     state.leads = normalizeLeads(nums);
     saveState();
     renderAlerts();
     renderDashboard();
-    toast('알림 기간을 저장했습니다.');
+    toast(t('a.leadsSaved'));
   } catch (err) {
     setError('#lead-error', err.message);
   }
@@ -773,11 +777,11 @@ function onIcsClick() {
   const ics = buildIcs({ items: state.items, leads: state.leads, today, dtstamp: icsDstamp(new Date()) });
   const count = state.items.reduce((n, it) => n + deadlinesForItem(it, today).length, 0);
   if (count === 0) {
-    toast('오늘 이후 마감일이 있는 항목이 없어 파일을 만들지 않았습니다.');
+    toast(t('a.icsNone'));
     return;
   }
   download(`licensetrack-${today}.ics`, 'text/calendar;charset=utf-8', ics);
-  toast(`마감 ${count}건이 담긴 달력 파일을 받았습니다.`);
+  toast(t('a.icsDone', { n: count }));
 }
 
 async function onNotifyClick() {
@@ -797,7 +801,7 @@ function onBackupClick() {
 
 function onStatusCsvClick() {
   if (!state.items.length) {
-    toast('저장할 자격 항목이 없습니다.');
+    toast(t('a.noItemsToSave'));
     return;
   }
   download(`licensetrack-status-${todayStr()}.csv`, 'text/csv;charset=utf-8', buildStatusCsv(state.items, state.credits, todayStr()));
@@ -805,7 +809,7 @@ function onStatusCsvClick() {
 
 function onCsvClick() {
   if (!state.credits.length) {
-    toast('저장할 학점 기록이 없습니다.');
+    toast(t('a.noCreditsToSave'));
     return;
   }
   download(`licensetrack-credits-${todayStr()}.csv`, 'text/csv;charset=utf-8', buildCreditsCsv(state.items, state.credits));
@@ -826,13 +830,13 @@ async function onCsvFileChange(e) {
     box.replaceChildren(el('p', { class: 'form-error', text: msg }));
     e.target.value = '';
   };
-  if (file.size > CSV_LIMITS.maxBytes) { fail('파일이 1MB보다 큽니다.'); return; }
-  if (!state.items.length) { fail('먼저 자격을 등록하세요. 자격명이 맞아야 기록을 넣을 수 있습니다.'); return; }
+  if (file.size > CSV_LIMITS.maxBytes) { fail(t('a.csvTooBig')); return; }
+  if (!state.items.length) { fail(t('a.csvAddFirst')); return; }
   let text;
   try {
     text = await file.text();
   } catch {
-    fail('파일을 읽을 수 없습니다.');
+    fail(t('a.csvReadFail'));
     return;
   }
   const r = importCreditsCsv(text, { items: state.items, existing: state.credits });
@@ -840,13 +844,13 @@ async function onCsvFileChange(e) {
   state.csvPending = r.credits;
   const shown = r.errors.slice(0, 100);
   box.replaceChildren(
-    el('p', { text: `${r.total}행을 읽었습니다. 가져올 수 있는 행 ${r.credits.length}개, 오류 ${r.errors.length}개, 같은 기록이 있어 건너뜀 ${r.skipped.length}개.` }),
+    el('p', { text: t('a.csvSummary', { total: r.total, ok: r.credits.length, err: r.errors.length, skip: r.skipped.length }) }),
     r.errors.length ? el('details', { class: 'csv-errors' },
-      el('summary', { text: `오류 행 보기 (${r.errors.length}개)` }),
-      el('ul', { class: 'bullets' }, shown.map((x) => el('li', { text: `${x.row}행: ${x.message}` }))),
-      r.errors.length > shown.length ? el('p', { class: 'muted small', text: `${r.errors.length - shown.length}개는 생략했습니다.` }) : null) : null);
+      el('summary', { text: t('a.csvErrSummary', { n: r.errors.length }) }),
+      el('ul', { class: 'bullets' }, shown.map((x) => el('li', { text: t('a.csvRowErr', { row: x.row, m: x.message }) }))),
+      r.errors.length > shown.length ? el('p', { class: 'muted small', text: t('a.csvOmitted', { n: r.errors.length - shown.length }) }) : null) : null);
   const commit = $('#csv-commit');
-  commit.textContent = `정상 ${r.credits.length}행 가져오기`;
+  commit.textContent = t('a.csvCommit', { n: r.credits.length });
   commit.hidden = r.credits.length === 0;
 }
 
@@ -858,10 +862,10 @@ function onCsvCommit() {
   const n = add.length;
   resetCsvImport();
   $('#csv-file').value = '';
-  $('#csv-result').replaceChildren(el('p', { text: `${n}건을 가져왔습니다.` }));
+  $('#csv-result').replaceChildren(el('p', { text: t('a.csvImported', { n }) }));
   renderCredits();
   renderDashboard();
-  toast(`학점 기록 ${n}건을 가져왔습니다.`);
+  toast(t('a.csvImportedToast', { n }));
 }
 
 async function onImportChange(e) {
@@ -870,7 +874,7 @@ async function onImportChange(e) {
   msg.replaceChildren();
   if (!file) return;
   if (file.size > MAX_IMPORT_BYTES) {
-    msg.append(el('p', { class: 'form-error', text: '파일이 2MB보다 큽니다. licensetrack 백업 파일인지 확인하세요.' }));
+    msg.append(el('p', { class: 'form-error', text: t('a.importTooBig') }));
     e.target.value = '';
     return;
   }
@@ -878,18 +882,18 @@ async function onImportChange(e) {
   try {
     parsed = JSON.parse(await file.text());
   } catch {
-    msg.append(el('p', { class: 'form-error', text: 'JSON 형식을 읽을 수 없습니다.' }));
+    msg.append(el('p', { class: 'form-error', text: t('a.importNotJson') }));
     e.target.value = '';
     return;
   }
   const v = validateBackup(parsed);
   if (!v.ok) {
-    msg.append(el('p', { class: 'form-error', text: '가져올 수 없는 파일입니다. 현재 데이터는 바뀌지 않았습니다.' }),
+    msg.append(el('p', { class: 'form-error', text: t('a.importBad') }),
       el('ul', { class: 'bullets' }, v.errors.map((x) => el('li', { text: x }))));
     e.target.value = '';
     return;
   }
-  if (!confirm(`현재 데이터를 모두 지우고 자격 ${v.data.items.length}개, 학점 기록 ${v.data.credits.length}건으로 바꿉니다. 계속할까요?`)) {
+  if (!confirm(t('a.importConfirm', { n: v.data.items.length, c: v.data.credits.length }))) {
     e.target.value = '';
     return;
   }
@@ -900,7 +904,7 @@ async function onImportChange(e) {
   state.creditItemId = null;
   saveState();
   e.target.value = '';
-  msg.append(el('p', { text: `불러왔습니다: 자격 ${v.data.items.length}개, 학점 기록 ${v.data.credits.length}건.` }));
+  msg.append(el('p', { text: t('a.importDone', { n: v.data.items.length, c: v.data.credits.length }) }));
   renderTemplateOptions();
   renderTemplateEditor();
   renderItemAdmin();
@@ -911,41 +915,40 @@ async function onImportChange(e) {
 function renderCertificates(today) {
   const certs = buildCertificates(state.items, state.credits, today);
   $('#cert-list').replaceChildren(...certs.map((c) => el('article', { class: 'cert' },
-    el('h3', { text: c.holder ? `${c.name} (${c.holder})` : c.name }),
-    el('p', { class: 'cert-meta', text: `발급 기관 ${c.issuer} · 주기 ${c.cycleStart} ~ ${c.cycleEnd} · 만료 ${c.expiry}` }),
-    el('p', { class: 'cert-meta', text: `필요 ${c.required === null ? '기준 없음' : fmt(c.required)} · 이월 ${fmt(c.carry)} · 이수 합계 ${c.total === null ? '-' : fmt(c.total)} · ${STATUS[c.status] ? STATUS[c.status][0] : '-'}` }),
+    el('h3', { text: c.holder ? t('a.certHolder', { name: c.name, h: c.holder }) : c.name }),
+    el('p', { class: 'cert-meta', text: t('a.certMeta', { i: c.issuer, s: c.cycleStart, e: c.cycleEnd, x: c.expiry }) }),
+    el('p', { class: 'cert-meta', text: t('a.certMeta2', { r: c.required === null ? t('a.noReq') : fmt(c.required), c: fmt(c.carry), t: c.total === null ? '-' : fmt(c.total), s: STATUS_KEYS[c.status] ? statusLabel(c.status) : '-' }) }),
     c.lines.length
-      ? el('table', {},
-        el('thead', {}, el('tr', {}, ['이수일', '과정명', '제공 기관', '분류', '시간'].map((h) => el('th', { scope: 'col', text: h })))),
+      ? el('div', { class: 'table-wrap' }, el('table', {},
+        el('thead', {}, el('tr', {}, [t('a.th.date'), t('a.th.course'), t('a.th.provider'), t('a.th.category'), t('a.th.hours')].map((h) => el('th', { scope: 'col', text: h })))),
         el('tbody', {}, c.lines.map((l) => el('tr', {},
           el('td', { text: l.date }), el('td', { text: l.course }), el('td', { text: l.provider }),
-          el('td', { text: l.category }), el('td', { class: 'num', text: fmt(l.hours) })))))
-      : el('p', { class: 'muted small', text: '이번 주기 안의 이수 기록이 없습니다.' }),
-    c.lines.length ? el('p', { class: 'cert-meta', text: `기록 합계 ${fmt(c.lineHours)}시간` }) : null)));
+          el('td', { text: l.category }), el('td', { class: 'num', text: fmt(l.hours) }))))))
+      : el('p', { class: 'muted small', text: t('a.certNone') }),
+    c.lines.length ? el('p', { class: 'cert-meta', text: t('a.certSum', { h: fmt(c.lineHours) }) }) : null)));
 }
 
 function renderPrint() {
   const today = todayStr();
-  $('#print-meta').textContent = `기준일 ${today} · 학점은 주기 기간 안의 기록만 합산`;
+  $('#print-meta').textContent = t('a.printMeta', { d: today });
   renderCertificates(today);
   const rows = buildPrintRows(state.items, state.credits, today);
   $('#print-body').replaceChildren(...(rows.length ? rows : [null]).map((r) => {
-    if (!r) return el('tr', {}, el('td', { colspan: '8', text: '등록된 자격이 없습니다.' }));
-    const st = STATUS[r.status];
+    if (!r) return el('tr', {}, el('td', { colspan: '8', text: t('a.printNone') }));
     return el('tr', {},
-      el('td', { text: r.holder ? `${r.name} (${r.holder})` : r.name }),
+      el('td', { text: r.holder ? t('a.certHolder', { name: r.name, h: r.holder }) : r.name }),
       el('td', { text: r.issuer || '-' }),
       el('td', { text: r.expiry }),
       el('td', { text: r.daysLeft === null ? '-' : ddayText(r.daysLeft) }),
       el('td', { text: r.cycleStart }),
       el('td', { class: 'num', text: r.required === null ? '-' : fmt(r.required) }),
       el('td', { class: 'num', text: r.earned === null ? '-' : fmt(r.earned) }),
-      el('td', { text: st ? st[0] : '-' }));
+      el('td', { text: STATUS_KEYS[r.status] ? statusLabel(r.status) : '-' }));
   }));
 }
 
 function onResetClick() {
-  if (!confirm('이 브라우저에 저장된 모든 자격과 학점 기록을 삭제합니다. 되돌릴 수 없습니다. 계속할까요?')) return;
+  if (!confirm(t('a.confirmReset'))) return;
   state.items = [];
   state.credits = [];
   state.leads = [...CONSTANTS.defaultLeadDays];
@@ -956,7 +959,7 @@ function onResetClick() {
   renderTemplateEditor();
   resetItemForm();
   renderAll();
-  toast('모든 데이터를 삭제했습니다.');
+  toast(t('a.resetDone'));
 }
 
 /* ---------- AI 계획 ---------- */
@@ -967,15 +970,15 @@ function renderAiPayloadPreview() {
   const payload = anonymizeForAi(elig.items);
   $('#ai-payload').textContent = payload.items.length
     ? buildPrompt(payload)
-    : '지금은 AI로 보낼 항목이 없습니다. 로컬 계획만 만들어집니다.';
+    : t('a.aiNothingToSend');
 }
 
 function renderAiKeyStatus() {
   renderAiPayloadPreview();
   const key = getAiKey();
   $('#key-status').textContent = key
-    ? `키가 이 브라우저에 저장되어 있습니다 (끝 4자리 …${key.slice(-4)}).`
-    : '저장된 키가 없습니다. 키 없이도 로컬 계획을 쓸 수 있습니다.';
+    ? t('a.keySaved', { last: key.slice(-4) })
+    : t('a.keyNone');
 }
 
 function onKeySubmit(e) {
@@ -983,24 +986,24 @@ function onKeySubmit(e) {
   setError('#key-error', '');
   const k = $('#ai-key').value.trim();
   if (!isPlausibleAnthropicKey(k)) {
-    setError('#key-error', 'Anthropic 키 형식이 맞지 않습니다. sk-ant- 로 시작하는 키인지 확인하세요.');
+    setError('#key-error', t('a.keyFormat'));
     return;
   }
   try {
     localStorage.setItem(AI_KEY, k);
   } catch {
-    setError('#key-error', '브라우저 저장소에 키를 저장할 수 없습니다.');
+    setError('#key-error', t('a.keyStoreFail'));
     return;
   }
   $('#ai-key').value = '';
   renderAiKeyStatus();
-  toast('키를 저장했습니다.');
+  toast(t('a.keySavedToast'));
 }
 
 function onKeyClear() {
   try { localStorage.removeItem(AI_KEY); } catch { /* 무시 */ }
   renderAiKeyStatus();
-  toast('키를 삭제했습니다.');
+  toast(t('a.keyRemovedToast'));
 }
 
 async function callClaude(key, prompt) {
@@ -1022,14 +1025,14 @@ async function callClaude(key, prompt) {
       }),
       signal: ctrl.signal,
     });
-    if (res.status === 401 || res.status === 403) throw new Error('키가 거부되었습니다 (인증 오류)');
-    if (res.status === 429) throw new Error('요청이 너무 많습니다. 잠시 후 다시 시도하세요');
-    if (!res.ok) throw new Error(`서버 응답 오류 (${res.status})`);
+    if (res.status === 401 || res.status === 403) throw new Error(t('a.errAuth'));
+    if (res.status === 429) throw new Error(t('a.errRate'));
+    if (!res.ok) throw new Error(t('a.errServer', { s: res.status }));
     const data = await res.json();
     const blocks = Array.isArray(data?.content) ? data.content : [];
     return blocks.filter((b) => b && b.type === 'text').map((b) => String(b.text || '')).join('');
   } catch (err) {
-    if (err && err.name === 'AbortError') throw new Error('응답 시간이 초과되었습니다');
+    if (err && err.name === 'AbortError') throw new Error(t('a.errTimeout'));
     throw err;
   } finally {
     clearTimeout(timer);
@@ -1062,21 +1065,21 @@ async function runPlan(useAi) {
   if (useAi) {
     const key = getAiKey();
     if (!key) {
-      setError('#key-error', '먼저 API 키를 저장하세요. 키 없이는 로컬 계획을 보실 수 있습니다.');
+      setError('#key-error', t('a.needKeyFirst'));
       return;
     }
     const payload = anonymizeForAi(elig.items);
     if (!payload.items.length) {
-      notes.push('AI로 보낼 항목이 없어 로컬 계획만 만들었습니다 (마감 12개월 이내, 최대 8개 항목만 AI 대상).');
+      notes.push(t('a.noAiItems'));
     } else {
-      setBusy(true, 'AI가 계획을 만드는 중입니다… 최대 30초 걸릴 수 있습니다.');
+      setBusy(true, t('a.aiWorking'));
       try {
         const text = await callClaude(key, buildPrompt(payload));
         const r = parsePlanReply(text, payload);
         aiPlans = r.plans;
-        if (r.errors.length) notes.push(`AI 응답 일부를 검증하지 못해 로컬 계획으로 채웠습니다. (${r.errors.slice(0, 2).join(' / ')})`);
+        if (r.errors.length) notes.push(t('a.aiPartial', { e: r.errors.slice(0, 2).join(' / ') }));
       } catch (err) {
-        notes.push(`AI 호출에 실패해 로컬 계획으로 대신했습니다: ${err.message || '알 수 없는 오류'}`);
+        notes.push(t('a.aiFailed', { m: err.message || t('a.unknownErr') }));
       } finally {
         setBusy(false, '');
       }
@@ -1088,16 +1091,16 @@ async function runPlan(useAi) {
     const values = aiValues ?? fallbackPlan(it, mode);
     const item = state.items.find((x) => x.id === it.internalId);
     plan.rows.push({
-      name: item ? item.name : '(항목)',
+      name: item ? item.name : t('a.itemPlaceholder'),
       remaining: it.remaining,
       months: monthLabels(today, it.months),
       values,
-      source: aiValues ? 'AI' : '로컬',
+      source: aiValues ? 'AI' : t('a.srcLocal'),
     });
   }
   state.plan = plan;
   renderPlan();
-  if (useAi) $('#ai-status').textContent = '계획을 만들었습니다. 참고용으로만 사용하세요.';
+  if (useAi) $('#ai-status').textContent = t('a.aiDone');
 }
 
 function renderPlan() {
@@ -1106,11 +1109,11 @@ function renderPlan() {
   if (!p) { out.replaceChildren(); return; }
   if (!p.rows.length) {
     out.replaceChildren(el('div', { class: 'card' },
-      el('h3', { text: '계획할 남은 학점이 없습니다' }),
-      el('p', { class: 'muted', text: p.skipped ? '만료된 항목은 계획하지 않습니다. 기록을 확인하거나 새 주기를 등록하세요.' : '필요 학점을 채운 항목이 없거나 모두 이수 완료 상태입니다.' })));
+      el('h3', { text: t('a.planNoneTitle') }),
+      el('p', { class: 'muted', text: p.skipped ? t('a.planSkipped') : t('a.planNoneBody') })));
     return;
   }
-  const modeLabel = p.mode === 'front' ? '앞당김' : '균등';
+  const modeLabel = p.mode === 'front' ? t('a.modeFront') : t('a.modeEven');
   const cards = p.rows.map((r) => {
     const sum = Math.round(r.values.reduce((a, b) => a + b, 0) * 100) / 100;
     const chips = r.values
@@ -1118,14 +1121,14 @@ function renderPlan() {
       .filter(Boolean);
     return el('li', {},
       el('strong', { text: r.name }),
-      el('p', { class: 'meta source', text: `남은 ${fmt(r.remaining)} · 계획 합계 ${fmt(sum)} · ${r.months.length}개월 · 출처 ${r.source}` }),
+      el('p', { class: 'meta source', text: t('a.planLine', { rem: fmt(r.remaining), sum: fmt(sum), n: r.months.length, src: r.source }) }),
       el('div', { class: 'plan-chips' }, chips));
   });
   out.replaceChildren(el('section', { class: 'card form' },
-    el('h3', { text: `월별 계획 (${p.source === 'ai' ? 'AI 제안' : '로컬 계산'} · ${modeLabel})` }),
+    el('h3', { text: t('a.planTitle', { src: p.source === 'ai' ? t('a.srcAi') : t('a.srcCalc'), mode: modeLabel }) }),
     p.notes.map((n) => el('p', { class: 'warn-note', text: n })),
     el('ul', { class: 'plan-list' }, cards),
-    el('p', { class: 'hint', text: '합계가 남은 학점과 같도록 맞춘 계획입니다. 실제 과정 일정과 기관 규정에 맞게 조정하세요.' })));
+    el('p', { class: 'hint', text: t('a.planHint') })));
 }
 
 function setupAi() {
@@ -1138,10 +1141,11 @@ function setupAi() {
 /* ---------- 전체 ---------- */
 function renderRules() {
   const ul = $('#rules');
-  const lines = [CONSTANTS.기준, ...Object.values(CONSTANTS.rules),
-    `알림 기간 기본값: ${CONSTANTS.defaultLeadDays.join(', ')}일 전 (설정에서 변경)`,
-    `긴급도: 30일 이내 ≤ ${CONSTANTS.urgency.soonDays}일, 90일 이내 ≤ ${CONSTANTS.urgency.warnDays}일`];
-  ul.replaceChildren(...lines.map((t) => el('li', { text: t })));
+  const r = CONSTANTS.rules;
+  const lines = [CONSTANTS.기준, r.cycle, r.leapYear, r.urgency, r.pace, r.projection,
+    t('a.ruleLeadDefault', { list: CONSTANTS.defaultLeadDays.join(', ') }),
+    t('a.ruleUrgency', { a: CONSTANTS.urgency.soonDays, b: CONSTANTS.urgency.warnDays })];
+  ul.replaceChildren(...lines.map((x) => el('li', { text: x })));
 }
 
 function renderAll() {
@@ -1155,6 +1159,20 @@ function renderAll() {
 function init() {
   // 토스트 영역
   document.body.append(el('div', { id: 'toast', class: 'toast', role: 'status', hidden: true }));
+  applyI18n(document);
+  langSelect($('#lang-select'), (l) => {
+    setLang(l);
+    writeSavedLang(l);
+    applyI18n(document);
+    renderTemplateOptions();
+    renderTemplateEditor();
+    renderRules();
+    $('#tpl-asof').textContent = CONSTANTS.기준;
+    renderAll();
+    if (state.plan) renderPlan();
+    renderAlerts();
+    activateTab(document.querySelector('[role="tab"][aria-selected="true"]')?.dataset.tab || 'dashboard');
+  });
 
   loadState();
   renderRules();
@@ -1191,7 +1209,7 @@ function init() {
   $('#reset-btn').addEventListener('click', onResetClick);
   setupAi();
 
-  if (!state.storageOk) toast('이 브라우저에서 저장소를 쓸 수 없습니다. 데이터는 이 화면이 열려 있는 동안만 유지됩니다.');
+  if (!state.storageOk) toast(t('a.storageWarn'));
 
   // 날짜가 바뀐 뒤 탭을 다시 열어도 정확하도록 포커스 복귀 시 대시보드 갱신
   window.addEventListener('focus', () => renderDashboard());

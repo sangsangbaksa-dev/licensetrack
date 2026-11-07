@@ -5,31 +5,32 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>licensetrack · 자격·면허 갱신과 보수교육 트래커</title>
   <meta name="description" content="자격증·면허의 갱신 기한과 보수교육 학점을 한 화면에서 관리하세요. 보유자별 보기, 연간 달력, 달력 알림 파일, JSON 백업과 CSV 가져오기를 지원합니다. 데이터는 이 브라우저에만 저장됩니다.">
-  <meta name="theme-color" content="#1D4ED8">
+  <meta name="theme-color" content="#F7F7F5">
   <meta property="og:type" content="website">
   <meta property="og:locale" content="ko_KR">
   <meta property="og:title" content="licensetrack · 자격·면허 갱신과 보수교육 트래커">
   <meta property="og:description" content="만료일, 학점 진행률, 연간 달력, 달력 알림을 한곳에서. 데이터는 이 브라우저에만 저장됩니다.">
-  <meta property="og:image" content="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%231D4ED8'/%3E%3Cpath d='M18 33l8 8 20-22' stroke='white' stroke-width='6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231D4ED8'/%3E%3Cpath d='M9 17l4 4 10-11' stroke='white' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23244C7A'/%3E%3Cpath d='M9 17l4 4 10-11' stroke='white' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <a class="skip" href="#app">본문으로 바로가기</a>
+  <a class="skip" href="#app" data-i18n="x.skip">본문으로 바로가기</a>
 
   <header class="topbar">
     <div class="wrap topbar-inner">
-      <a class="brand" href="#top" aria-label="licensetrack 홈">
-        <svg width="28" height="28" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="var(--accent)"/><path d="M9 17l4 4 10-11" stroke="#FFFFFF" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <a class="brand" href="#top" aria-label="licensetrack 홈" data-i18n-aria="x.homeAria">
         <span>licensetrack</span>
       </a>
-      <nav class="topnav" aria-label="페이지 안내">
-        <a href="#screens">화면</a>
-        <a href="#features">기능</a>
-        <a href="#how">사용 순서</a>
-        <a href="#faq">자주 묻는 질문</a>
+      <nav class="topnav" aria-label="페이지 안내" data-i18n-aria="x.navAria">
+        <a href="#screens" data-i18n="x.navScreens">화면</a>
+        <a href="#features" data-i18n="x.navFeatures">기능</a>
+        <a href="#how" data-i18n="x.navHow">사용 순서</a>
+        <a href="#faq" data-i18n="x.navFaq">자주 묻는 질문</a>
       </nav>
-      <a class="btn btn-primary btn-sm" href="#app">앱 열기</a>
+      <div class="topbar-actions">
+        <select id="lang-select" class="lang-select" aria-label="언어" data-i18n-aria="common.language"></select>
+        <a class="btn btn-primary btn-sm" href="#app" data-i18n="x.openApp">앱 열기</a>
+      </div>
     </div>
   </header>
 
@@ -37,56 +38,52 @@
     <section class="hero" aria-labelledby="hero-title">
       <div class="wrap hero-grid">
         <div class="hero-copy">
-          <p class="eyebrow">자격·면허 갱신과 보수교육 트래커</p>
-          <h1 id="hero-title">갱신 기한과 학점을<br>한 장의 화면으로</h1>
-          <p class="lead">자격마다 만료일이나 주기, 필요 학점을 적어 두면 남은 기간과 이수 진행률, 앞으로 울릴 알림을 한 번에 봅니다. 가족 자격은 보유자별로 나눠 봅니다. 데이터는 이 브라우저에만 저장됩니다.</p>
+          <p class="eyebrow" data-i18n="x.eyebrow">자격·면허 갱신과 보수교육 트래커</p>
+          <h1 id="hero-title" data-i18n="x.heroTitle">갱신 기한과 학점을 한 장의 화면으로</h1>
+          <p class="lead" data-i18n="x.heroLead">자격마다 만료일이나 주기, 필요 학점을 적어 두면 남은 기간과 이수 진행률, 앞으로 울릴 알림을 한 번에 봅니다. 가족 자격은 보유자별로 나눠 봅니다. 데이터는 이 브라우저에만 저장됩니다.</p>
           <div class="hero-actions">
-            <a class="btn btn-primary" href="#app">내 자격 등록하기</a>
-            <a class="btn btn-ghost" href="#screens">화면 미리 보기</a>
+            <a class="btn btn-primary" href="#app" data-i18n="x.heroCta">내 자격 등록하기</a>
+            <a class="btn btn-ghost" href="#screens" data-i18n="x.heroSecondary">화면 미리 보기</a>
           </div>
-          <ul class="hero-points" aria-label="특징">
-            <li>계정·서버 없음</li>
-            <li>달력(.ics) 알림 파일</li>
-            <li>JSON 백업·CSV 가져오기</li>
+          <ul class="hero-points" data-i18n-aria="x.pointsAria" aria-label="특징">
+            <li data-i18n="x.point1">계정·서버 없음</li>
+            <li data-i18n="x.point2">달력(.ics) 알림 파일</li>
+            <li data-i18n="x.point3">JSON 백업·CSV 가져오기</li>
           </ul>
-          <p class="fineprint">화면의 자격명과 학점은 예시 데이터입니다. 템플릿의 주기와 시간은 예시 · 확인 필요입니다.</p>
+          <p class="fineprint" data-i18n="x.fine">화면의 자격명과 학점은 예시 데이터입니다. 템플릿의 주기와 시간은 예시 · 확인 필요입니다.</p>
         </div>
 
-        <figure class="shot" aria-label="대시보드 예시 화면">
-          <div class="shot-bar" aria-hidden="true"><span></span><span></span><span></span><em>licensetrack · 대시보드 (예시 데이터)</em></div>
+        <figure class="shot" data-i18n-aria="x.shotAria" aria-label="대시보드 예시 화면">
+          <div class="shot-bar" aria-hidden="true"><span></span><span></span><span></span><em data-i18n="x.shotBar">licensetrack · 대시보드 (예시 데이터)</em></div>
           <div class="shot-body">
-            <p class="shot-date">오늘 2026-11-06 기준으로 계산</p>
-            <ul class="counts" aria-label="상태별 개수 예시">
-              <li><span class="badge b-expired">만료</span><strong>0</strong></li>
-              <li><span class="badge b-d30">30일 이내</span><strong>1</strong></li>
-              <li><span class="badge b-d90">90일 이내</span><strong>1</strong></li>
-              <li><span class="badge b-ok">여유</span><strong>0</strong></li>
+            <p class="shot-date" data-i18n="x.shotDate">오늘 2026-11-06 기준으로 계산</p>
+            <ul class="counts" data-i18n-aria="x.shotCountsAria" aria-label="상태별 개수 예시">
+              <li><span class="badge b-expired" data-i18n="common.bucketExpired">만료</span><strong>0</strong></li>
+              <li><span class="badge b-d30" data-i18n="common.bucketD30">30일 이내</span><strong>1</strong></li>
+              <li><span class="badge b-d90" data-i18n="common.bucketD90">90일 이내</span><strong>1</strong></li>
+              <li><span class="badge b-ok" data-i18n="common.bucketOk">여유</span><strong>0</strong></li>
             </ul>
             <article class="card item-card">
               <div class="item-head">
                 <div style="min-width:0">
-                  <h3>안전관리자 (예시)</h3>
-                  <p>어머니 · 2년 주기</p>
+                  <h3 data-i18n="x.shotItem">안전관리자 (예시)</h3>
+                  <p data-i18n="x.shotHolder">어머니 · 2년 주기</p>
                 </div>
-                <span class="badge b-d30">30일 이내</span>
+                <span class="badge b-d30" data-i18n="common.bucketD30">30일 이내</span>
               </div>
               <dl class="facts">
-                <div><dt>만료일</dt><dd>2026-11-20</dd></div>
-                <div><dt>남은 기간</dt><dd>D-14</dd></div>
-                <div class="wide"><dt>이수 / 필요</dt><dd>9 / 24</dd></div>
+                <div><dt data-i18n="a.f.expiry">만료일</dt><dd>2026-11-20</dd></div>
+                <div><dt data-i18n="a.f.left">남은 기간</dt><dd>D-14</dd></div>
+                <div class="wide"><dt data-i18n="a.f.progress">이수 / 필요</dt><dd>9 / 24</dd></div>
               </dl>
               <div>
-                <div class="progress is-risk" role="img" aria-label="이수 38%, 예시"><span style="width:37.5%"></span></div>
-                <div class="progress-label"><span class="status-tag s-risk">현재 페이스로 부족 예상</span><span>38%</span></div>
+                <div class="progress is-risk" role="img" data-i18n-aria="x.shotProgAria" aria-label="이수 38%, 예시"><span style="width:37.5%"></span></div>
+                <div class="progress-label"><span class="status-tag s-risk" data-i18n="a.st.risk">현재 페이스로 부족 예상</span><span>38%</span></div>
               </div>
             </article>
-            <div>
-              <p class="shot-caption">최근 26주 학점 기록 (예시)</p>
-              <div class="mini-heat" aria-hidden="true"><i class="h1"></i><i class="h0"></i><i class="h1"></i><i class="h4"></i><i class="h2"></i><i class="h1"></i><i class="h3"></i><i class="h3"></i><i class="h0"></i><i class="h4"></i><i class="h0"></i><i class="h0"></i><i class="h4"></i><i class="h0"></i><i class="h0"></i><i class="h0"></i><i class="h0"></i><i class="h2"></i><i class="h3"></i><i class="h2"></i><i class="h2"></i><i class="h0"></i><i class="h1"></i><i class="h1"></i><i class="h0"></i><i class="h3"></i><i class="h0"></i><i class="h2"></i><i class="h0"></i><i class="h0"></i><i class="h2"></i><i class="h2"></i><i class="h3"></i><i class="h2"></i><i class="h2"></i><i class="h2"></i><i class="h0"></i><i class="h0"></i><i class="h0"></i><i class="h1"></i><i class="h0"></i><i class="h0"></i><i class="h2"></i><i class="h0"></i><i class="h3"></i><i class="h1"></i><i class="h0"></i><i class="h1"></i><i class="h1"></i><i class="h0"></i><i class="h0"></i><i class="h3"></i><i class="h1"></i><i class="h0"></i><i class="h2"></i><i class="h1"></i><i class="h0"></i><i class="h1"></i><i class="h0"></i><i class="h0"></i><i class="h1"></i><i class="h1"></i><i class="h1"></i><i class="h0"></i><i class="h1"></i><i class="h0"></i><i class="h2"></i><i class="h0"></i><i class="h0"></i><i class="h3"></i><i class="h1"></i><i class="h1"></i><i class="h3"></i><i class="h0"></i><i class="h1"></i><i class="h0"></i><i class="h1"></i><i class="h2"></i><i class="h0"></i><i class="h0"></i><i class="h1"></i><i class="h0"></i><i class="h0"></i><i class="h2"></i><i class="h2"></i><i class="h1"></i><i class="h0"></i><i class="h1"></i><i class="h0"></i><i class="h0"></i><i class="h3"></i><i class="h0"></i><i class="h1"></i><i class="h0"></i><i class="h3"></i><i class="h2"></i><i class="h1"></i><i class="h0"></i><i class="h2"></i><i class="h0"></i><i class="h0"></i><i class="h1"></i><i class="h2"></i><i class="h0"></i><i class="h0"></i><i class="h1"></i><i class="h0"></i><i class="h4"></i><i class="h0"></i><i class="h1"></i><i class="h1"></i><i class="h3"></i><i class="h2"></i><i class="h4"></i><i class="h0"></i><i class="h0"></i><i class="h1"></i><i class="h0"></i><i class="h2"></i><i class="h1"></i><i class="h3"></i><i class="h2"></i><i class="h1"></i><i class="h3"></i><i class="h0"></i><i class="h1"></i><i class="h3"></i><i class="h1"></i><i class="h0"></i><i class="h2"></i><i class="h3"></i><i class="h3"></i><i class="h0"></i><i class="h0"></i><i class="h0"></i><i class="h0"></i><i class="h0"></i><i class="h2"></i><i class="h2"></i><i class="h0"></i><i class="h1"></i><i class="h0"></i><i class="h0"></i><i class="h1"></i><i class="h1"></i><i class="h3"></i><i class="h3"></i><i class="h0"></i><i class="h2"></i><i class="h0"></i><i class="h2"></i><i class="h0"></i><i class="h0"></i><i class="h2"></i><i class="h0"></i><i class="h3"></i><i class="h0"></i><i class="h0"></i><i class="h1"></i><i class="h1"></i><i class="h1"></i><i class="h3"></i><i class="h1"></i><i class="h4"></i><i class="h0"></i><i class="h1"></i><i class="h1"></i><i class="h0"></i><i class="h1"></i><i class="h2"></i><i class="h1"></i><i class="h0"></i><i class="h3"></i><i class="h1"></i><i class="h1"></i><i class="h2"></i><i class="h2"></i><i class="h0"></i><i class="h3"></i><i class="h0"></i><i class="h0"></i><i class="h0"></i></div>
-            </div>
-            <ol class="timeline" aria-label="마감 타임라인 예시">
-              <li><time datetime="2026-11-20">2026-11-20</time><span>안전관리자 (예시)</span><span class="dday">D-14</span></li>
-              <li><time datetime="2027-03-31">2027-03-31</time><span>간호사 면허 (예시)</span><span class="dday">D-145</span></li>
+            <ol class="timeline" data-i18n-aria="x.shotTlAria" aria-label="마감 타임라인 예시">
+              <li><time datetime="2026-11-20">2026-11-20</time><span data-i18n="x.shotItem">안전관리자 (예시)</span><span class="dday">D-14</span></li>
+              <li><time datetime="2027-03-31">2027-03-31</time><span data-i18n="x.shotItem2">간호사 면허 (예시)</span><span class="dday">D-145</span></li>
             </ol>
           </div>
         </figure>
@@ -95,479 +92,423 @@
 
     <section id="screens" class="section section-alt" aria-labelledby="screens-title">
       <div class="wrap">
-        <h2 id="screens-title">화면은 네 가지로 나뉩니다</h2>
-        <p class="section-sub">대시보드에서 전체를 보고, 자격 탭에서 등록하고, 학점 탭에서 기록하고, 알림·달력 탭에서 시점을 정합니다. 각 화면은 같은 데이터를 다른 방식으로 보여 줍니다.</p>
+        <h2 id="screens-title" data-i18n="x.screensTitle">화면은 네 가지로 나뉩니다</h2>
+        <p class="section-sub" data-i18n="x.screensLead">대시보드에서 전체를 보고, 자격 탭에서 등록하고, 학점 탭에서 기록하고, 알림·달력 탭에서 시점을 정합니다. 각 화면은 같은 데이터를 다른 방식으로 보여 줍니다.</p>
         <div class="feature-grid">
           <article class="card feature">
-            <h3>대시보드</h3>
-            <p>만료, 30일 이내, 90일 이내, 여유 순으로 정렬하고, 보유자별로 묶어 볼 수 있습니다.</p>
-            <div class="feat-visual" aria-hidden="true">
-              <div class="chip-row"><span class="chip is-on">전체 3</span><span class="chip">본인 2</span><span class="chip">어머니 1</span></div>
-              <div class="mini-line"><time>2026-11-20</time><span>안전관리자 (예시)</span><b>D-14</b></div>
-              <div class="mini-line"><time>2027-03-31</time><span>간호사 면허 (예시)</span><b>D-145</b></div>
-            </div>
+            <h3 data-i18n="x.fDashT">대시보드</h3>
+            <p data-i18n="x.fDashD">만료, 30일 이내, 90일 이내, 여유 순으로 정렬하고, 보유자별로 묶어 볼 수 있습니다.</p>
           </article>
           <article class="card feature">
-            <h3>학점 기록과 페이스</h3>
-            <p>주기 기간 안의 기록만 합산합니다. 지금 속도로 가면 부족할지, 남은 기간에 매달 얼마가 필요한지 보여 줍니다.</p>
-            <div class="feat-visual" aria-hidden="true">
-              <div class="progress" style="height:10px"><span style="width:37.5%"></span></div>
-              <p class="meta">이수 9 / 필요 24 · 남은 기간 월 15 학점 필요 (예시)</p>
-            </div>
+            <h3 data-i18n="x.fPaceT">학점 기록과 페이스</h3>
+            <p data-i18n="x.fPaceD">주기 기간 안의 기록만 합산합니다. 지금 속도로 가면 부족할지, 남은 기간에 매달 얼마가 필요한지 보여 줍니다.</p>
           </article>
           <article class="card feature">
-            <h3>연간 달력</h3>
-            <p>하루 단위로 학점 기록의 양과 마감일을 한 해 전체에 펼쳐 봅니다. 해를 넘겨 가며 볼 수 있습니다.</p>
-            <div class="feat-visual" aria-hidden="true">
-              <div class="mini-heat"><i class="h3"></i><i class="h2"></i><i class="h0"></i><i class="h1"></i><i class="h3"></i><i class="h1"></i><i class="h0"></i><i class="h3"></i><i class="h0"></i><i class="h1"></i><i class="h0"></i><i class="h0"></i><i class="h0"></i><i class="h4"></i><i class="h0"></i><i class="h0"></i><i class="h0"></i><i class="h0"></i><i class="h2"></i><i class="h1"></i><i class="h0"></i><i class="h0"></i><i class="h1"></i><i class="h0"></i><i class="h3"></i><i class="h0"></i><i class="h1"></i><i class="h0"></i><i class="h1"></i><i class="h0"></i><i class="h1"></i><i class="h0"></i><i class="h2"></i><i class="h0"></i><i class="h2"></i><i class="h0"></i><i class="h2"></i><i class="h1"></i><i class="h1"></i><i class="h0"></i><i class="h0"></i><i class="h0"></i><i class="h0"></i><i class="h0"></i><i class="h0"></i><i class="h1"></i><i class="h0"></i><i class="h0"></i><i class="h1"></i><i class="h4"></i><i class="h3"></i><i class="h0"></i><i class="h1"></i><i class="h2"></i><i class="h2"></i><i class="h0"></i><i class="h1"></i><i class="h0"></i><i class="h3"></i><i class="h0"></i><i class="h0"></i><i class="h3"></i><i class="h0"></i><i class="h0"></i><i class="h1"></i><i class="h2"></i><i class="h1"></i><i class="h1"></i><i class="h3"></i><i class="h1"></i><i class="h2"></i><i class="h2"></i><i class="h0"></i><i class="h1"></i><i class="h2"></i><i class="h4"></i><i class="h1"></i><i class="h0"></i><i class="h4"></i><i class="h0"></i><i class="h0"></i><i class="h0"></i><i class="h1"></i><i class="h0"></i><i class="h0"></i><i class="h0"></i><i class="h0"></i><i class="h0"></i><i class="h1"></i><i class="h1"></i><i class="h2"></i><i class="h1"></i><i class="h1"></i><i class="h0"></i><i class="h2"></i><i class="h4"></i><i class="h3"></i><i class="h2"></i><i class="h0"></i><i class="h0"></i><i class="h0"></i><i class="h1"></i><i class="h2"></i><i class="h0"></i><i class="h2"></i><i class="h0"></i><i class="h3"></i><i class="h2"></i><i class="h0"></i><i class="h2"></i><i class="h0"></i><i class="h0"></i><i class="h0"></i><i class="h4"></i><i class="h1"></i><i class="h3"></i><i class="h2"></i><i class="h2"></i><i class="h0"></i><i class="h4"></i><i class="h1"></i><i class="h4"></i><i class="h1"></i><i class="h3"></i><i class="h2"></i><i class="h2"></i><i class="h1"></i><i class="h3"></i><i class="h0"></i><i class="h0"></i><i class="h2"></i><i class="h3"></i><i class="h1"></i><i class="h0"></i><i class="h2"></i><i class="h1"></i><i class="h0"></i><i class="h3"></i><i class="h4"></i><i class="h0"></i><i class="h1"></i><i class="h1"></i><i class="h0"></i><i class="h3"></i><i class="h0"></i><i class="h0"></i><i class="h0"></i><i class="h2"></i><i class="h3"></i><i class="h0"></i><i class="h3"></i><i class="h0"></i><i class="h0"></i><i class="h0"></i><i class="h0"></i><i class="h0"></i><i class="h2"></i><i class="h1"></i><i class="h0"></i><i class="h0"></i><i class="h3"></i><i class="h2"></i><i class="h1"></i><i class="h1"></i><i class="h0"></i><i class="h2"></i><i class="h1"></i><i class="h1"></i><i class="h1"></i><i class="h3"></i><i class="h0"></i><i class="h1"></i><i class="h2"></i><i class="h0"></i><i class="h3"></i><i class="h1"></i><i class="h2"></i><i class="h0"></i><i class="h0"></i><i class="h1"></i><i class="h0"></i><i class="h1"></i></div>
-            </div>
+            <h3 data-i18n="x.fCalT">연간 달력</h3>
+            <p data-i18n="x.fCalD">하루 단위로 학점 기록의 양과 마감일을 한 해 전체에 펼쳐 봅니다. 해를 넘겨 가며 볼 수 있습니다.</p>
           </article>
           <article class="card feature">
-            <h3>알림 기간과 달력 파일</h3>
-            <p>표준·짧게·길게 프리셋 중 고르거나 직접 입력합니다. 앞으로 울릴 날짜를 목록으로 보여 주고, .ics 파일로 내보냅니다.</p>
-            <div class="feat-visual" aria-hidden="true">
-              <div class="chip-row"><span class="chip is-on">표준 180·90·30·7일 전</span></div>
-              <div class="mini-line"><time>2026-11-13</time><span>안전관리자 (예시) · 7일 전</span><b></b></div>
-              <div class="mini-line"><time>2026-12-06</time><span>안전관리자 (예시) · 14일 전</span><b></b></div>
-            </div>
+            <h3 data-i18n="x.fAlertT">알림 기간과 달력 파일</h3>
+            <p data-i18n="x.fAlertD">표준·짧게·길게 프리셋 중 고르거나 직접 입력합니다. 앞으로 울릴 날짜를 목록으로 보여 주고, .ics 파일로 내보냅니다.</p>
           </article>
           <article class="card feature">
-            <h3>템플릿과 중복 확인</h3>
-            <p>예시 템플릿의 주기와 필요 학점은 직접 고칠 수 있습니다. 이름이나 자격 번호가 같은 항목은 저장 전에 알려 줍니다.</p>
-            <div class="feat-visual" aria-hidden="true">
-              <div class="chip-row"><span class="chip">예시 · 확인 필요</span><span class="chip is-on">사용자 수정값</span></div>
-              <p class="meta">비슷한 자격이 있습니다: 간호사 면허 / 간호사면허 (이름 같음)</p>
-            </div>
+            <h3 data-i18n="x.fTplT">템플릿과 중복 확인</h3>
+            <p data-i18n="x.fTplD">예시 템플릿의 주기와 필요 학점은 직접 고칠 수 있습니다. 이름이나 자격 번호가 같은 항목은 저장 전에 알려 줍니다.</p>
           </article>
           <article class="card feature">
-            <h3>백업·CSV·인쇄</h3>
-            <p>JSON 백업으로 기기를 옮기고, 학점 기록은 CSV로 내보내거나 가져옵니다. 가져올 때 틀린 행은 행 번호와 이유를 보여 줍니다.</p>
-            <div class="feat-visual" aria-hidden="true">
-              <div class="mini-line"><span>CSV 가져오기</span><span>정상 12행</span><b>오류 1행</b></div>
-              <div class="mini-line"><span>요약 인쇄</span><span>마감·필요·이수</span><b>PDF 저장</b></div>
-            </div>
+            <h3 data-i18n="x.fBackT">백업·CSV·인쇄</h3>
+            <p data-i18n="x.fBackD">JSON 백업으로 기기를 옮기고, 학점 기록은 CSV로 내보내거나 가져옵니다. 가져올 때 틀린 행은 행 번호와 이유를 보여 줍니다.</p>
           </article>
         </div>
       </div>
     </section>
 
     <section id="features" class="section" aria-labelledby="features-title">
-      <div class="wrap">
-        <h2 id="features-title">기한을 흩어 두지 않도록</h2>
-        <p class="section-sub">수료증 봉투와 달력 메모 대신, 하나의 기록과 하나의 화면으로 관리합니다.</p>
-        <div class="trust-grid">
-          <article class="card">
-            <h3>만료일 또는 주기</h3>
-            <p>만료일을 직접 적거나 발급일과 주기(년)만 넣으면 됩니다. 주기 기간과 다음 마감을 계산합니다. 발급일과 주기로 만든 만료일은 기념일 전날로 봅니다.</p>
-          </article>
-          <article class="card">
-            <h3>보유자별로 나누기</h3>
-            <p>가족 자격을 한 앱에 넣을 때 보유자 이름을 붙이면 보유자별 요약과 필터를 씁니다. 이름은 달력 파일과 AI 기능에 들어가지 않습니다.</p>
-          </article>
-          <article class="card">
-            <h3>기록은 한 줄씩 확인</h3>
-            <p>CSV를 가져오면 자격명이 맞지 않거나 날짜가 틀린 행을 행 번호와 함께 보여 줍니다. 정상 행만 추가하고, 이미 있는 기록은 건너뜁니다.</p>
-          </article>
+      <div class="wrap two-col">
+        <div class="section-head">
+          <h2 id="features-title" data-i18n="x.featTitle">기한을 흩어 두지 않도록</h2>
+          <p data-i18n="x.featLead">수료증 봉투와 달력 메모 대신, 하나의 기록과 하나의 화면으로 관리합니다.</p>
         </div>
+        <dl class="feature-list">
+          <div class="feature"><dt data-i18n="x.tr1T">만료일 또는 주기</dt><dd data-i18n="x.tr1D">만료일을 직접 적거나 발급일과 주기(년)만 넣으면 됩니다. 주기 기간과 다음 마감을 계산합니다. 발급일과 주기로 만든 만료일은 기념일 전날로 봅니다.</dd></div>
+          <div class="feature"><dt data-i18n="x.tr2T">보유자별로 나누기</dt><dd data-i18n="x.tr2D">가족 자격을 한 앱에 넣을 때 보유자 이름을 붙이면 보유자별 요약과 필터를 씁니다. 이름은 달력 파일과 AI 기능에 들어가지 않습니다.</dd></div>
+          <div class="feature"><dt data-i18n="x.tr3T">기록은 한 줄씩 확인</dt><dd data-i18n="x.tr3D">CSV를 가져오면 자격명이 맞지 않거나 날짜가 틀린 행을 행 번호와 함께 보여 줍니다. 정상 행만 추가하고, 이미 있는 기록은 건너뜁니다.</dd></div>
+        </dl>
       </div>
     </section>
 
     <section id="how" class="section section-alt" aria-labelledby="how-title">
-      <div class="wrap">
-        <h2 id="how-title">사용 순서 4단계</h2>
-        <p class="section-sub">처음에는 자격 하나만 넣어 보세요. 나머지는 같은 방식으로 이어서 넣으면 됩니다.</p>
+      <div class="wrap two-col">
+        <div class="section-head">
+          <h2 id="how-title" data-i18n="x.howTitle">사용 순서 4단계</h2>
+          <p data-i18n="x.howLead">처음에는 자격 하나만 넣어 보세요. 나머지는 같은 방식으로 이어서 넣으면 됩니다.</p>
+        </div>
         <ol class="steps">
-          <li class="card step"><span class="step-no" aria-hidden="true">1</span><div><h3>자격 등록</h3><p>예시 템플릿을 고르거나 직접 입력합니다. 만료일 또는 발급일과 주기, 필요 학점을 적습니다.</p></div></li>
-          <li class="card step"><span class="step-no" aria-hidden="true">2</span><div><h3>이수 기록</h3><p>교육을 받을 때마다 날짜와 시간, 과정명을 남깁니다. 여러 건이면 CSV로 한 번에 가져올 수 있습니다.</p></div></li>
-          <li class="card step"><span class="step-no" aria-hidden="true">3</span><div><h3>알림 정하기</h3><p>알림 프리셋을 고르고, 앞으로 울릴 날짜 목록을 확인합니다. 달력 앱에 .ics 파일을 가져오면 같은 날짜에 알림이 등록됩니다.</p></div></li>
-          <li class="card step"><span class="step-no" aria-hidden="true">4</span><div><h3>주기적으로 백업</h3><p>JSON 백업을 받아 두면 기기를 바꾸거나 브라우저 데이터를 지워도 되돌릴 수 있습니다.</p></div></li>
+          <li><h3 data-i18n="x.s1T">자격 등록</h3><p data-i18n="x.s1D">예시 템플릿을 고르거나 직접 입력합니다. 만료일 또는 발급일과 주기, 필요 학점을 적습니다.</p></li>
+          <li><h3 data-i18n="x.s2T">이수 기록</h3><p data-i18n="x.s2D">교육을 받을 때마다 날짜와 시간, 과정명을 남깁니다. 여러 건이면 CSV로 한 번에 가져올 수 있습니다.</p></li>
+          <li><h3 data-i18n="x.s3T">알림 정하기</h3><p data-i18n="x.s3D">알림 프리셋을 고르고, 앞으로 울릴 날짜 목록을 확인합니다. 달력 앱에 .ics 파일을 가져오면 같은 날짜에 알림이 울립니다.</p></li>
+          <li><h3 data-i18n="x.s4T">주기적으로 백업</h3><p data-i18n="x.s4D">JSON 백업을 받아 두면 기기를 바꾸거나 브라우저 데이터를 지워도 되돌릴 수 있습니다.</p></li>
         </ol>
       </div>
     </section>
 
     <section id="trust" class="section" aria-labelledby="trust-title">
-      <div class="wrap">
-        <h2 id="trust-title">데이터와 계산에 대해</h2>
-        <div class="trust-grid">
-          <article class="card">
-            <h3>저장 위치</h3>
-            <p>자격과 학점 기록은 이 브라우저의 저장소에만 있습니다. 서버 계정이나 업로드 기능이 없습니다. 브라우저 데이터를 지우면 함께 사라지니 백업을 받아 두세요.</p>
-          </article>
-          <article class="card">
-            <h3>AI 계획은 선택</h3>
-            <p>본인 API 키를 직접 넣고 버튼을 눌렀을 때만 남은 학점의 숫자 요약을 보냅니다. 키가 없어도 로컬 계획으로 같은 기능을 씁니다.</p>
-          </article>
-          <article class="card">
-            <h3>예시 값과 확인</h3>
-            <p>템플릿의 주기와 필요 학점은 예시 · 확인 필요 값입니다. 법령이나 기관 기준이 아니므로 발급 기관에서 확인해 직접 고쳐 쓰세요.</p>
-          </article>
+      <div class="wrap two-col">
+        <div class="section-head">
+          <h2 id="trust-title" data-i18n="x.trustTitle">데이터와 계산에 대해</h2>
         </div>
+        <dl class="feature-list">
+          <div class="feature"><dt data-i18n="x.t1T">저장 위치</dt><dd data-i18n="x.t1D">자격과 학점 기록은 이 브라우저의 저장소에만 있습니다. 서버 계정이나 업로드 기능이 없습니다. 브라우저 데이터를 지우면 함께 사라지니 백업을 받아 두세요.</dd></div>
+          <div class="feature"><dt data-i18n="x.t2T">AI 계획은 선택</dt><dd data-i18n="x.t2D">본인 API 키를 직접 넣고 버튼을 눌렀을 때만 남은 학점의 숫자 요약을 보냅니다. 키가 없어도 로컬 계획으로 같은 기능을 씁니다.</dd></div>
+          <div class="feature"><dt data-i18n="x.t3T">예시 값과 확인</dt><dd data-i18n="x.t3D">템플릿의 주기와 필요 학점은 예시 · 확인 필요 값입니다. 법령이나 기관 기준이 아니므로 발급 기관에서 확인해 직접 고쳐 쓰세요.</dd></div>
+        </dl>
       </div>
     </section>
 
     <section id="app" class="section app-section" aria-labelledby="app-title">
       <div class="wrap">
         <div class="app-head">
-          <h2 id="app-title">내 자격 관리</h2>
-          <p class="muted">모든 데이터는 이 브라우저의 저장소에만 있습니다. 기기를 옮기기 전에 JSON 백업을 받아 두세요.</p>
+          <h2 id="app-title" data-i18n="x.appTitle">내 자격 관리</h2>
+          <p class="muted" data-i18n="x.appLead">모든 데이터는 이 브라우저의 저장소에만 있습니다. 기기를 옮기기 전에 JSON 백업을 받아 두세요.</p>
         </div>
 
-        <div class="tabs" role="tablist" aria-label="기능 선택">
-          <button role="tab" id="tab-dashboard" data-tab="dashboard" aria-selected="true" aria-controls="panel-dashboard" tabindex="0">대시보드</button>
-          <button role="tab" id="tab-items" data-tab="items" aria-selected="false" aria-controls="panel-items" tabindex="-1">자격 관리</button>
-          <button role="tab" id="tab-credits" data-tab="credits" aria-selected="false" aria-controls="panel-credits" tabindex="-1">학점 기록</button>
-          <button role="tab" id="tab-alerts" data-tab="alerts" aria-selected="false" aria-controls="panel-alerts" tabindex="-1">알림·달력</button>
-          <button role="tab" id="tab-backup" data-tab="backup" aria-selected="false" aria-controls="panel-backup" tabindex="-1">백업·인쇄</button>
-          <button role="tab" id="tab-ai" data-tab="ai" aria-selected="false" aria-controls="panel-ai" tabindex="-1">AI 계획 (선택)</button>
+        <div class="tabs" role="tablist" data-i18n-aria="x.tabsAria" aria-label="기능 선택">
+          <button role="tab" id="tab-dashboard" data-tab="dashboard" aria-selected="true" aria-controls="panel-dashboard" tabindex="0" data-i18n="x.tabDash">대시보드</button>
+          <button role="tab" id="tab-items" data-tab="items" aria-selected="false" aria-controls="panel-items" tabindex="-1" data-i18n="x.tabItems">자격 관리</button>
+          <button role="tab" id="tab-credits" data-tab="credits" aria-selected="false" aria-controls="panel-credits" tabindex="-1" data-i18n="x.tabCredits">학점 기록</button>
+          <button role="tab" id="tab-alerts" data-tab="alerts" aria-selected="false" aria-controls="panel-alerts" tabindex="-1" data-i18n="x.tabAlerts">알림·달력</button>
+          <button role="tab" id="tab-backup" data-tab="backup" aria-selected="false" aria-controls="panel-backup" tabindex="-1" data-i18n="x.tabBackup">백업·인쇄</button>
+          <button role="tab" id="tab-ai" data-tab="ai" aria-selected="false" aria-controls="panel-ai" tabindex="-1" data-i18n="x.tabAi">AI 계획 (선택)</button>
         </div>
 
         <!-- 대시보드 -->
         <section id="panel-dashboard" class="panel" role="tabpanel" aria-labelledby="tab-dashboard">
           <p class="muted" id="today-label"></p>
           <div class="holder-bar" id="holder-bar" hidden>
-            <label for="holder-filter">보유자 보기</label>
+            <label for="holder-filter" data-i18n="x.holderLabel">보유자 보기</label>
             <select id="holder-filter"></select>
           </div>
-          <ul class="holder-summary" id="holder-summary" hidden aria-label="보유자별 요약"></ul>
+          <ul class="holder-summary" id="holder-summary" hidden data-i18n-aria="x.holderSumAria" aria-label="보유자별 요약"></ul>
           <div id="alert-banner" class="alert" role="status" hidden></div>
-          <ul class="counts" id="counts" aria-label="상태별 개수"></ul>
+          <ul class="counts" id="counts" data-i18n-aria="x.countsAria" aria-label="상태별 개수"></ul>
           <div id="item-list" class="cards"></div>
           <div id="empty-dashboard" class="empty card" hidden>
-            <h3>아직 등록된 자격이 없습니다</h3>
-            <p>예시 템플릿으로 시작하거나 직접 입력해 보세요.</p>
-            <button class="btn btn-primary" type="button" data-goto="items">자격 등록하러 가기</button>
+            <h3 data-i18n="x.emptyTitle">아직 등록된 자격이 없습니다</h3>
+            <p data-i18n="x.emptyBody">예시 템플릿으로 시작하거나 직접 입력해 보세요.</p>
+            <button class="btn btn-primary" type="button" data-goto="items" data-i18n="x.emptyCta">자격 등록하러 가기</button>
           </div>
           <details class="card rules">
-            <summary>계산 규칙과 기준</summary>
+            <summary data-i18n="x.rulesSummary">계산 규칙과 기준</summary>
             <ul class="bullets" id="rules"></ul>
           </details>
-          <h3 class="sub-head">마감 타임라인 (365일 이내)</h3>
+          <h3 class="sub-head" data-i18n="x.tlTitle">마감 타임라인 (365일 이내)</h3>
           <ol id="timeline" class="timeline"></ol>
-          <p id="timeline-empty" class="muted" hidden>365일 이내 마감이 없습니다.</p>
+          <p id="timeline-empty" class="muted" hidden data-i18n="x.tlEmpty">365일 이내 마감이 없습니다.</p>
           <section class="card heat" aria-labelledby="heat-title">
             <div class="heat-head">
-              <h3 id="heat-title">연간 달력: 이수 학점과 마감일</h3>
+              <h3 id="heat-title" data-i18n="x.heatTitle">연간 달력: 이수 학점과 마감일</h3>
               <div class="heat-nav">
-                <button class="btn btn-secondary btn-small" type="button" id="heat-prev" aria-label="이전 해">‹ 이전 해</button>
+                <button class="btn btn-secondary btn-small" type="button" id="heat-prev" data-i18n-aria="x.prevYearAria" aria-label="이전 해" data-i18n="x.prevYear">‹ 이전 해</button>
                 <span id="heat-year" class="heat-year" aria-live="polite"></span>
-                <button class="btn btn-secondary btn-small" type="button" id="heat-next" aria-label="다음 해">다음 해 ›</button>
+                <button class="btn btn-secondary btn-small" type="button" id="heat-next" data-i18n-aria="x.nextYearAria" aria-label="다음 해" data-i18n="x.nextYear">다음 해 ›</button>
               </div>
             </div>
             <p class="muted" id="heat-summary"></p>
             <div class="heat-scroll" id="heat-wrap"></div>
             <div class="heat-legend" aria-hidden="true">
-              <span>기록 없음</span><span class="heat-sw h1"></span><span class="heat-sw h2"></span><span class="heat-sw h3"></span><span class="heat-sw h4"></span><span>하루 10시간 이상</span>
-              <span class="heat-dot-key"></span><span>마감일</span>
+              <span data-i18n="x.legendNone">기록 없음</span><span class="heat-sw h1"></span><span class="heat-sw h2"></span><span class="heat-sw h3"></span><span class="heat-sw h4"></span><span data-i18n="x.legendMax">하루 10시간 이상</span>
+              <span class="heat-dot-key"></span><span data-i18n="x.legendDeadline">마감일</span>
             </div>
-            <h3 class="sub-head">이 해의 마감일</h3>
+            <h3 class="sub-head" data-i18n="x.yearDeadlines">이 해의 마감일</h3>
             <ul class="heat-dl-list" id="heat-dl-list"></ul>
-            <p id="heat-dl-empty" class="muted" hidden>이 해에 마감일이 없습니다.</p>
+            <p id="heat-dl-empty" class="muted" hidden data-i18n="x.yearNone">이 해에 마감일이 없습니다.</p>
           </section>
-          <p class="disclaimer">이 화면은 입력한 값으로 계산한 참고 자료이며 법률, 세무, 재무 자문이 아닙니다. 실제 기한과 요건은 발급 기관에서 확인하세요.</p>
+          <p class="disclaimer" data-i18n="x.disclaimerDash">이 화면은 입력한 값으로 계산한 참고 자료이며 법률, 세무, 재무 자문이 아닙니다. 실제 기한과 요건은 발급 기관에서 확인하세요.</p>
         </section>
 
         <!-- 자격 관리 -->
         <section id="panel-items" class="panel" role="tabpanel" aria-labelledby="tab-items" hidden>
           <div id="dup-banner" class="alert" role="status" hidden></div>
           <form id="item-form" class="card form" novalidate>
-            <h3 id="item-form-title">새 자격 추가</h3>
+            <h3 id="item-form-title" data-i18n="a.newItemTitle">새 자격 추가</h3>
             <div class="field">
-              <label for="tpl">예시 템플릿</label>
+              <label for="tpl" data-i18n="x.tplLabel">예시 템플릿</label>
               <select id="tpl"></select>
-              <p class="hint">선택하면 자격명·기관·주기·필요 학점 칸을 예시 값으로 채웁니다. 예시 값은 아래 편집 칸에서 바꿀 수 있으며, 기관 기준으로 반드시 확인하세요.</p>
+              <p class="hint" data-i18n="x.tplHint">선택하면 자격명·기관·주기·필요 학점 칸을 예시 값으로 채웁니다. 예시 값은 아래 편집 칸에서 바꿀 수 있으며, 기관 기준으로 반드시 확인하세요.</p>
             </div>
             <input type="hidden" id="item-id">
             <div class="grid-2">
               <div class="field">
-                <label for="f-name">자격명 <span class="req">필수</span></label>
+                <label for="f-name"><span data-i18n="f.name">자격명</span> <span class="req" data-i18n="common.required">필수</span></label>
                 <input id="f-name" name="name" maxlength="100" autocomplete="off" required>
               </div>
               <div class="field">
-                <label for="f-issuer">발급 기관</label>
+                <label for="f-issuer" data-i18n="f.issuer">발급 기관</label>
                 <input id="f-issuer" name="issuer" maxlength="100" autocomplete="off">
               </div>
               <div class="field">
-                <label for="f-holder">보유자 (가족 구분, 선택)</label>
-                <input id="f-holder" name="holder" maxlength="40" autocomplete="off" list="holder-list" placeholder="예: 본인, 어머니">
+                <label for="f-holder" data-i18n="x.holderField">보유자 (가족 구분, 선택)</label>
+                <input id="f-holder" name="holder" maxlength="40" autocomplete="off" list="holder-list" data-i18n-ph="x.holderPh" placeholder="예: 본인, 어머니">
                 <datalist id="holder-list"></datalist>
-                <p class="hint">같은 이름을 쓰면 대시보드에서 보유자별로 묶어 볼 수 있습니다.</p>
+                <p class="hint" data-i18n="x.holderHint">같은 이름을 쓰면 대시보드에서 보유자별로 묶어 볼 수 있습니다.</p>
               </div>
               <div class="field">
-                <label for="f-number">자격 번호 (선택)</label>
+                <label for="f-number" data-i18n="x.numberField">자격 번호 (선택)</label>
                 <input id="f-number" name="number" maxlength="50" autocomplete="off">
-                <p class="hint">달력 파일과 AI 기능에는 포함되지 않습니다.</p>
+                <p class="hint" data-i18n="x.numberHint">달력 파일과 AI 기능에는 포함되지 않습니다.</p>
               </div>
               <div class="field">
-                <label for="f-issued">발급일</label>
+                <label for="f-issued" data-i18n="f.issuedOn">발급일</label>
                 <input id="f-issued" name="issuedOn" type="date">
               </div>
               <div class="field">
-                <label for="f-expires">만료일</label>
+                <label for="f-expires" data-i18n="f.expiresOn">만료일</label>
                 <input id="f-expires" name="expiresOn" type="date">
-                <p class="hint">만료일을 모르면 발급일과 갱신 주기를 입력하세요.</p>
+                <p class="hint" data-i18n="x.expiresHint">만료일을 모르면 발급일과 갱신 주기를 입력하세요.</p>
               </div>
               <div class="field">
-                <label for="f-cycle">갱신 주기 (년)</label>
+                <label for="f-cycle" data-i18n="f.cycleYears">갱신 주기 (년)</label>
                 <input id="f-cycle" name="cycleYears" type="number" min="0" max="50" step="1" inputmode="numeric">
-                <p class="hint">0 또는 빈 칸이면 주기 없음.</p>
+                <p class="hint" data-i18n="x.cycleHint">0 또는 빈 칸이면 주기 없음.</p>
               </div>
               <div class="field">
-                <label for="f-required">주기당 필요 학점·시간</label>
-                <input id="f-required" name="requiredCredits" type="text" inputmode="decimal" placeholder="예: 8">
-                <p class="hint">비워 두면 학점 기준을 계산하지 않습니다.</p>
+                <label for="f-required" data-i18n="x.requiredField">주기당 필요 학점·시간</label>
+                <input id="f-required" name="requiredCredits" type="text" inputmode="decimal" data-i18n-ph="x.requiredPh" placeholder="예: 8">
+                <p class="hint" data-i18n="x.requiredHint">비워 두면 학점 기준을 계산하지 않습니다.</p>
               </div>
               <div class="field">
-                <label for="f-carry">이월 학점 (이번 주기에 인정)</label>
+                <label for="f-carry" data-i18n="x.carryField">이월 학점 (이번 주기에 인정)</label>
                 <input id="f-carry" name="carryover" type="text" inputmode="decimal" placeholder="0">
-                <p class="hint">이전 주기에서 인정되는 학점을 직접 입력합니다. 이월 가능 여부는 기관 규정을 확인하세요.</p>
+                <p class="hint" data-i18n="x.carryHint">이전 주기에서 인정되는 학점을 직접 입력합니다. 이월 가능 여부는 기관 규정을 확인하세요.</p>
               </div>
             </div>
             <div class="field">
-              <label for="f-notes">메모</label>
+              <label for="f-notes" data-i18n="f.notes">메모</label>
               <textarea id="f-notes" name="notes" rows="2" maxlength="1000"></textarea>
             </div>
             <p class="form-error" id="item-error" role="alert" hidden></p>
             <div class="actions">
-              <button class="btn btn-primary" type="submit" id="item-save">저장</button>
-              <button class="btn btn-ghost" type="button" id="item-cancel" hidden>수정 취소</button>
+              <button class="btn btn-primary" type="submit" id="item-save" data-i18n="common.save">저장</button>
+              <button class="btn btn-ghost" type="button" id="item-cancel" hidden data-i18n="x.cancelEdit">수정 취소</button>
             </div>
           </form>
           <details class="card tpl-editor" id="tpl-editor">
-            <summary>예시 템플릿 값 편집 (주기·필요 학점)</summary>
+            <summary data-i18n="x.tplEditSummary">예시 템플릿 값 편집 (주기·필요 학점)</summary>
             <div class="tpl-body">
-              <p class="warn-note" role="note"><strong>예시 · 확인 필요.</strong> 아래 값은 법령이나 기관 기준이 아니며, 직접 확인해서 고쳐 쓰는 출발점입니다.</p>
+              <p class="warn-note" role="note"><strong data-i18n="x.tplWarnStrong">예시 · 확인 필요.</strong> <span data-i18n="x.tplWarn">아래 값은 법령이나 기관 기준이 아니며, 직접 확인해서 고쳐 쓰는 출발점입니다.</span></p>
               <p class="hint" id="tpl-asof"></p>
-              <p class="hint">바꾼 값은 이 브라우저와 백업 파일에 저장됩니다. 언제든 기본값으로 되돌릴 수 있습니다.</p>
+              <p class="hint" data-i18n="x.tplSaveNote">바꾼 값은 이 브라우저와 백업 파일에 저장됩니다. 언제든 기본값으로 되돌릴 수 있습니다.</p>
               <ul id="tpl-list" class="stack-list"></ul>
             </div>
           </details>
-          <h3 class="sub-head">등록된 자격</h3>
+          <h3 class="sub-head" data-i18n="x.itemsTitle">등록된 자격</h3>
           <ul id="item-admin" class="stack-list"></ul>
         </section>
 
         <!-- 학점 기록 -->
         <section id="panel-credits" class="panel" role="tabpanel" aria-labelledby="tab-credits" hidden>
           <div class="field">
-            <label for="credit-item">자격 선택</label>
+            <label for="credit-item" data-i18n="x.creditPick">자격 선택</label>
             <select id="credit-item"></select>
           </div>
           <div id="cycle-info" class="card cycle-info"></div>
           <form id="credit-form" class="card form" novalidate>
-            <h3>이수 기록 추가</h3>
+            <h3 data-i18n="x.creditAddTitle">이수 기록 추가</h3>
             <div class="grid-2">
               <div class="field">
-                <label for="c-date">이수일 <span class="req">필수</span></label>
+                <label for="c-date"><span data-i18n="f.date">이수일</span> <span class="req" data-i18n="common.required">필수</span></label>
                 <input id="c-date" type="date" required>
               </div>
               <div class="field">
-                <label for="c-hours">이수 시간 (학점) <span class="req">필수</span></label>
-                <input id="c-hours" type="text" inputmode="decimal" placeholder="예: 2.5">
+                <label for="c-hours"><span data-i18n="f.hours">이수 시간 (학점)</span> <span class="req" data-i18n="common.required">필수</span></label>
+                <input id="c-hours" type="text" inputmode="decimal" data-i18n-ph="x.hoursPh" placeholder="예: 2.5">
               </div>
               <div class="field">
-                <label for="c-course">과정명</label>
+                <label for="c-course" data-i18n="f.course">과정명</label>
                 <input id="c-course" maxlength="200" autocomplete="off">
               </div>
               <div class="field">
-                <label for="c-provider">제공 기관</label>
+                <label for="c-provider" data-i18n="f.provider">제공 기관</label>
                 <input id="c-provider" maxlength="100" autocomplete="off">
               </div>
               <div class="field">
-                <label for="c-category">분류</label>
-                <input id="c-category" maxlength="40" list="cat-list" placeholder="예: 법정, 윤리, 직무">
-                <datalist id="cat-list"><option value="법정"></option><option value="윤리"></option><option value="직무"></option><option value="실무"></option></datalist>
+                <label for="c-category" data-i18n="f.category">분류</label>
+                <input id="c-category" maxlength="40" list="cat-list" data-i18n-ph="x.catPh" placeholder="예: 법정, 윤리, 직무">
+                <datalist id="cat-list"><option value="법정" data-i18n-value="x.catLegal"></option><option value="윤리" data-i18n-value="x.catEthics"></option><option value="직무" data-i18n-value="x.catJob"></option><option value="실무" data-i18n-value="x.catPractice"></option></datalist>
               </div>
               <div class="field">
-                <label for="c-memo">인증서 메모</label>
-                <input id="c-memo" maxlength="500" autocomplete="off" placeholder="예: 인증서 원본 서랍 2번">
+                <label for="c-memo" data-i18n="f.certMemo">인증서 메모</label>
+                <input id="c-memo" maxlength="500" autocomplete="off" data-i18n-ph="x.memoPh" placeholder="예: 인증서 원본 서랍 2번">
               </div>
             </div>
             <p class="form-error" id="credit-error" role="alert" hidden></p>
-            <div class="actions"><button class="btn btn-primary" type="submit">기록 추가</button></div>
+            <div class="actions"><button class="btn btn-primary" type="submit" data-i18n="x.creditAddBtn">기록 추가</button></div>
           </form>
-          <h3 class="sub-head">기록 목록</h3>
+          <h3 class="sub-head" data-i18n="x.recordsTitle">기록 목록</h3>
           <ul id="credit-list" class="stack-list"></ul>
-          <p id="credit-empty" class="muted" hidden>아직 기록이 없습니다.</p>
-          <div class="actions"><button class="btn btn-secondary" type="button" id="csv-btn">학점 기록 CSV 저장 (전체)</button></div>
+          <p id="credit-empty" class="muted" hidden data-i18n="x.recordsEmpty">아직 기록이 없습니다.</p>
+          <div class="actions"><button class="btn btn-secondary" type="button" id="csv-btn" data-i18n="x.csvSaveAll">학점 기록 CSV 저장 (전체)</button></div>
 
           <div class="card form">
-            <h3>학점 기록 CSV 가져오기</h3>
-            <p>내보내기로 받은 CSV(자격명, 날짜, 이수시간, 과정명, 제공기관, 분류, 메모)를 읽습니다. 자격명은 등록된 이름과 정확히 같아야 합니다. 잘못된 행은 건너뛰고 행 번호와 이유를 보여 줍니다. 정상 행만 추가되며 기존 기록은 바뀌지 않습니다.</p>
+            <h3 data-i18n="x.csvImportTitle">학점 기록 CSV 가져오기</h3>
+            <p data-i18n="x.csvImportLead">내보내기로 받은 CSV(자격명, 날짜, 이수시간, 과정명, 제공기관, 분류, 메모)를 읽습니다. 자격명은 등록된 이름과 정확히 같아야 합니다. 잘못된 행은 건너뛰고 행 번호와 이유를 보여 줍니다.</p>
             <div class="field">
-              <label for="csv-file">CSV 파일 선택</label>
+              <label for="csv-file" data-i18n="x.csvPick">CSV 파일 선택</label>
               <input id="csv-file" type="file" accept=".csv,text/csv">
-              <p class="hint">행 번호는 시트와 같이 1행이 머리글입니다. 칸 안에 줄바꿈이 있으면 실제 줄과 어긋날 수 있습니다.</p>
+              <p class="hint" data-i18n="x.csvRowHint">행 번호는 시트와 같이 1행이 머리글입니다. 칸 안에 줄바꿈이 있으면 실제 줄과 어긋날 수 있습니다.</p>
             </div>
             <div id="csv-result" role="status"></div>
-            <div class="actions"><button class="btn btn-primary" type="button" id="csv-commit" hidden>정상 행 가져오기</button></div>
+            <div class="actions"><button class="btn btn-primary" type="button" id="csv-commit" hidden data-i18n="x.csvCommitBtn">정상 행 가져오기</button></div>
           </div>
         </section>
 
         <!-- 알림 -->
         <section id="panel-alerts" class="panel" role="tabpanel" aria-labelledby="tab-alerts" hidden>
           <form id="lead-form" class="card form" novalidate>
-            <h3>알림 기간</h3>
+            <h3 data-i18n="x.leadTitle">알림 기간</h3>
             <div class="field">
-              <span class="field-label" id="preset-label">프리셋 (누르면 바로 저장)</span>
+              <span class="field-label" id="preset-label" data-i18n="x.presetLabel">프리셋 (누르면 바로 저장)</span>
               <div class="preset-row" role="group" aria-labelledby="preset-label">
-                <button class="btn btn-secondary btn-small" type="button" data-preset="standard" aria-pressed="false">표준 180·90·30·7일 전</button>
-                <button class="btn btn-secondary btn-small" type="button" data-preset="short" aria-pressed="false">짧게 30·14·7·1일 전</button>
-                <button class="btn btn-secondary btn-small" type="button" data-preset="long" aria-pressed="false">길게 365·180·90·30·14·7일 전</button>
+                <button class="btn btn-secondary btn-small" type="button" data-preset="standard" aria-pressed="false" data-i18n="lic.lead.standard">표준 180·90·30·7일 전</button>
+                <button class="btn btn-secondary btn-small" type="button" data-preset="short" aria-pressed="false" data-i18n="lic.lead.short">짧게 30·14·7·1일 전</button>
+                <button class="btn btn-secondary btn-small" type="button" data-preset="long" aria-pressed="false" data-i18n="lic.lead.long">길게 365·180·90·30·14·7일 전</button>
               </div>
               <p class="hint" id="preset-status" role="status"></p>
             </div>
             <div class="field">
-              <label for="leads">마감 며칠 전에 알릴까요? (쉼표로 구분)</label>
+              <label for="leads" data-i18n="x.leadsLabel">마감 며칠 전에 알릴까요? (쉼표로 구분)</label>
               <input id="leads" inputmode="numeric" autocomplete="off" placeholder="180, 90, 30, 7">
-              <p class="hint">1~730 사이 정수, 최대 8개. 기본값은 180, 90, 30, 7 입니다.</p>
+              <p class="hint" data-i18n="x.leadsHint">1~730 사이 정수, 최대 8개. 기본값은 180, 90, 30, 7 입니다.</p>
             </div>
             <p class="form-error" id="lead-error" role="alert" hidden></p>
-            <div class="actions"><button class="btn btn-primary" type="submit">알림 기간 저장</button></div>
+            <div class="actions"><button class="btn btn-primary" type="submit" data-i18n="x.leadSave">알림 기간 저장</button></div>
           </form>
 
           <div class="card form">
-            <h3>곧 울릴 알림 (앱 기준 예정)</h3>
-            <p class="hint">마감일 기준으로 계산한 알림 날짜입니다. 실제 알림은 .ics 를 가져온 달력 앱이나 앱을 여는 순간 표시됩니다.</p>
+            <h3 data-i18n="x.upcomingTitle">곧 울릴 알림 (앱 기준 예정)</h3>
+            <p class="hint" data-i18n="x.upcomingHint">마감일 기준으로 계산한 알림 날짜입니다. 실제 알림은 .ics 를 가져온 달력 앱이나 앱을 여는 순간 표시됩니다.</p>
             <ol class="upcoming" id="upcoming"></ol>
-            <p class="muted" id="upcoming-empty" hidden>앞으로 울릴 알림이 없습니다. 자격을 등록하거나 알림 기간을 바꿔 보세요.</p>
+            <p class="muted" id="upcoming-empty" hidden data-i18n="x.upcomingNone">앞으로 울릴 알림이 없습니다. 자격을 등록하거나 알림 기간을 바꿔 보세요.</p>
           </div>
 
           <div class="card form">
-            <h3>달력 파일 (.ics)</h3>
-            <p>각 마감일마다 종일 일정이 만들어지고, 설정한 기간마다 알림(VALARM)이 붙습니다. 달력 앱에서 파일을 가져오면 됩니다.</p>
+            <h3 data-i18n="x.icsTitle">달력 파일 (.ics)</h3>
+            <p data-i18n="x.icsLead">각 마감일마다 종일 일정이 만들어지고, 설정한 기간마다 알림(VALARM)이 붙습니다. 달력 앱에서 파일을 가져오면 됩니다.</p>
             <ul class="bullets">
-              <li>자격 번호는 파일에 넣지 않습니다. 보유자 이름도 넣지 않습니다.</li>
-              <li>항목을 바꾼 뒤에는 파일을 다시 받아 가져오세요. 같은 항목·마감일은 같은 식별자를 가집니다.</li>
-              <li>알림이 울리는 시각은 달력 앱 설정에 따릅니다. 앱에 따라 종일 일정 알림이 다르게 동작할 수 있습니다.</li>
+              <li data-i18n="x.icsB1">자격 번호는 파일에 넣지 않습니다. 보유자 이름도 넣지 않습니다.</li>
+              <li data-i18n="x.icsB2">항목을 바꾼 뒤에는 파일을 다시 받아 가져오세요. 같은 항목·마감일은 같은 식별자를 가집니다.</li>
+              <li data-i18n="x.icsB3">알림이 울리는 시각은 달력 앱 설정에 따릅니다. 앱에 따라 종일 일정 알림이 다르게 동작할 수 있습니다.</li>
             </ul>
-            <div class="actions"><button class="btn btn-primary" type="button" id="ics-btn">달력 파일 받기 (.ics)</button></div>
+            <div class="actions"><button class="btn btn-primary" type="button" id="ics-btn" data-i18n="x.icsBtn">달력 파일 받기 (.ics)</button></div>
           </div>
 
           <div class="card form">
-            <h3>브라우저 알림 (앱을 열었을 때)</h3>
-            <p>앱을 열면 알림 기간 안에 든 항목을 한 번씩 브라우저 알림으로 보여 줍니다. 서버가 없어서 앱이 닫혀 있으면 알림이 오지 않습니다.</p>
+            <h3 data-i18n="x.notifyTitle">브라우저 알림 (앱을 열었을 때)</h3>
+            <p data-i18n="x.notifyLead">앱을 열면 알림 기간 안에 든 항목을 한 번씩 브라우저 알림으로 보여 줍니다. 서버가 없어서 앱이 닫혀 있으면 알림이 오지 않습니다.</p>
             <p id="notify-status" class="muted" role="status"></p>
-            <div class="actions"><button class="btn btn-secondary" type="button" id="notify-btn">브라우저 알림 허용</button></div>
+            <div class="actions"><button class="btn btn-secondary" type="button" id="notify-btn" data-i18n="x.notifyBtn">브라우저 알림 허용</button></div>
           </div>
         </section>
 
         <!-- 백업·인쇄 -->
         <section id="panel-backup" class="panel" role="tabpanel" aria-labelledby="tab-backup" hidden>
           <div class="card form">
-            <h3>JSON 백업</h3>
-            <p>자격, 학점 기록, 알림 설정, 템플릿 수정값을 한 파일로 저장합니다. 불러오면 현재 데이터를 모두 바꿉니다.</p>
-            <div class="actions"><button class="btn btn-primary" type="button" id="json-btn">백업 파일 저장</button></div>
+            <h3 data-i18n="x.jsonTitle">JSON 백업</h3>
+            <p data-i18n="x.jsonLead">자격, 학점 기록, 알림 설정, 템플릿 수정값을 한 파일로 저장합니다. 불러오면 현재 데이터를 모두 바꿉니다.</p>
+            <div class="actions"><button class="btn btn-primary" type="button" id="json-btn" data-i18n="x.jsonSave">백업 파일 저장</button></div>
             <div class="field">
-              <label for="import-file">백업 파일 불러오기</label>
+              <label for="import-file" data-i18n="x.jsonLoad">백업 파일 불러오기</label>
               <input id="import-file" type="file" accept="application/json,.json">
             </div>
             <div id="import-msg" role="status"></div>
           </div>
 
           <div class="card form">
-            <h3>요약 인쇄</h3>
-            <p>자격별 마감일, 필요 학점, 이수 학점을 한 장으로 정리합니다.</p>
-            <div class="actions"><button class="btn btn-secondary" type="button" id="print-btn">인쇄 또는 PDF로 저장</button> <button class="btn btn-secondary" type="button" id="status-csv-btn">자격 현황 CSV 저장</button></div>
+            <h3 data-i18n="x.printTitle">요약 인쇄</h3>
+            <p data-i18n="x.printLead">자격별 마감일, 필요 학점, 이수 학점을 한 장으로 정리합니다.</p>
+            <div class="actions"><button class="btn btn-secondary" type="button" id="print-btn" data-i18n="x.printBtn">인쇄 또는 PDF로 저장</button> <button class="btn btn-secondary" type="button" id="status-csv-btn" data-i18n="x.statusCsvBtn">자격 현황 CSV 저장</button></div>
             <div id="print-summary" class="print-area">
-              <h2 class="print-title">자격·면허 갱신·보수교육 요약</h2>
+              <h2 class="print-title" data-i18n="x.printHeading">자격·면허 갱신·보수교육 요약</h2>
               <p class="print-meta" id="print-meta"></p>
               <div class="table-wrap">
                 <table>
-                  <thead><tr><th scope="col">자격명</th><th scope="col">발급 기관</th><th scope="col">만료일</th><th scope="col">남은 기간</th><th scope="col">주기 시작</th><th scope="col">필요</th><th scope="col">이수</th><th scope="col">상태</th></tr></thead>
+                  <thead><tr><th scope="col" data-i18n="x.thName">자격명</th><th scope="col" data-i18n="f.issuer">발급 기관</th><th scope="col" data-i18n="a.f.expiry">만료일</th><th scope="col" data-i18n="a.f.left">남은 기간</th><th scope="col" data-i18n="x.thCycleStart">주기 시작</th><th scope="col" data-i18n="x.thRequired">필요</th><th scope="col" data-i18n="x.thEarned">이수</th><th scope="col" data-i18n="x.thStatus">상태</th></tr></thead>
                   <tbody id="print-body"></tbody>
                 </table>
               </div>
-              <h3 class="sub-head cert-head">자격별 이수 내역 (이번 주기)</h3>
+              <h3 class="sub-head cert-head" data-i18n="x.certTitle">자격별 이수 내역 (이번 주기)</h3>
               <div id="cert-list"></div>
-              <p class="disclaimer">참고용 계산 결과이며 법률, 세무, 재무 자문이 아닙니다. 자격 번호와 메모는 인쇄하지 않습니다.</p>
+              <p class="disclaimer" data-i18n="x.printDisclaimer">참고용 계산 결과이며 법률, 세무, 재무 자문이 아닙니다. 자격 번호와 메모는 인쇄하지 않습니다.</p>
             </div>
           </div>
 
           <div class="card form danger-zone">
-            <h3>데이터 삭제</h3>
-            <p>이 브라우저에 저장된 모든 자격과 학점 기록을 지웁니다. 되돌릴 수 없으니 먼저 백업을 받으세요.</p>
-            <div class="actions"><button class="btn btn-danger" type="button" id="reset-btn">모든 데이터 삭제</button></div>
+            <h3 data-i18n="x.dangerTitle">데이터 삭제</h3>
+            <p data-i18n="x.dangerLead">이 브라우저에 저장된 모든 자격과 학점 기록을 지웁니다. 되돌릴 수 없으니 먼저 백업을 받으세요.</p>
+            <div class="actions"><button class="btn btn-danger" type="button" id="reset-btn" data-i18n="x.dangerBtn">모든 데이터 삭제</button></div>
           </div>
         </section>
 
         <!-- AI -->
         <section id="panel-ai" class="panel" role="tabpanel" aria-labelledby="tab-ai" hidden>
           <div class="card form">
-            <h3>AI 보수교육 계획 (선택 기능)</h3>
-            <p>남은 학점을 월별로 나눈 계획을 만듭니다. 사용하지 않아도 앱의 모든 기능이 동작합니다.</p>
-            <p class="warn-note" role="note">브라우저에 저장한 API 키는 개발자도구에서 볼 수 있습니다. 공용 컴퓨터에서는 저장하지 마세요.</p>
+            <h3 data-i18n="x.aiTitle">AI 보수교육 계획 (선택 기능)</h3>
+            <p data-i18n="x.aiLead">남은 학점을 월별로 나눈 계획을 만듭니다. 사용하지 않아도 앱의 모든 기능이 동작합니다.</p>
+            <p class="warn-note" role="note" data-i18n="x.aiWarn">브라우저에 저장한 API 키는 개발자도구에서 볼 수 있습니다. 공용 컴퓨터에서는 저장하지 마세요.</p>
             <form id="key-form" novalidate>
               <div class="field">
-                <label for="ai-key">Anthropic API 키 (본인 키)</label>
+                <label for="ai-key" data-i18n="x.aiKeyLabel">Anthropic API 키 (본인 키)</label>
                 <input id="ai-key" type="password" autocomplete="off" spellcheck="false" placeholder="sk-ant-…">
               </div>
               <p class="form-error" id="key-error" role="alert" hidden></p>
               <p class="muted" id="key-status" role="status"></p>
               <div class="actions">
-                <button class="btn btn-primary" type="submit">키 저장</button>
-                <button class="btn btn-ghost" type="button" id="key-clear">키 삭제</button>
+                <button class="btn btn-primary" type="submit" data-i18n="x.aiKeySave">키 저장</button>
+                <button class="btn btn-ghost" type="button" id="key-clear" data-i18n="x.aiKeyRemove">키 삭제</button>
               </div>
             </form>
             <details class="sent">
-              <summary>AI 기능으로 보내는 내용</summary>
+              <summary data-i18n="x.aiSentSummary">AI 기능으로 보내는 내용</summary>
               <ul class="bullets">
-                <li>익명 기호(A1, A2…), 남은 학점, 남은 개월 수</li>
-                <li>분류 이름과 분류별 이수 학점 숫자</li>
-                <li>보내지 않는 것: 자격명, 발급 기관, 자격 번호, 보유자, 메모, 과정명, 제공 기관, 날짜</li>
+                <li data-i18n="x.aiSent1">익명 기호(A1, A2…), 남은 학점, 남은 개월 수</li>
+                <li data-i18n="x.aiSent2">분류 이름과 분류별 이수 학점 숫자</li>
+                <li data-i18n="x.aiSent3">보내지 않는 것: 자격명, 발급 기관, 자격 번호, 보유자, 메모, 과정명, 제공 기관, 날짜</li>
               </ul>
-              <p class="hint">마감이 12개월 넘게 남았거나 항목이 8개를 넘으면 AI 대신 로컬 계획을 씁니다. 버튼을 누를 때만 전송합니다.</p>
-              <p class="small"><strong>지금 보내게 될 내용 (실제 전송문과 같음)</strong></p>
-              <pre class="payload" id="ai-payload" tabindex="0" aria-label="AI로 보낼 내용 미리 보기"></pre>
+              <p class="hint" data-i18n="x.aiLimitHint">마감이 12개월 넘게 남았거나 항목이 8개를 넘으면 AI 대신 로컬 계획을 씁니다. 버튼을 누를 때만 전송합니다.</p>
+              <p class="small"><strong data-i18n="x.aiPreviewLabel">지금 보내게 될 내용 (실제 전송문과 같음)</strong></p>
+              <pre class="payload" id="ai-payload" tabindex="0" data-i18n-aria="x.aiPayloadAria" aria-label="AI로 보낼 내용 미리 보기"></pre>
             </details>
             <div class="field">
               <fieldset class="radio-group">
-                <legend>로컬 계획 방식</legend>
-                <label><input type="radio" name="plan-mode" value="even" checked> 균등 분배 (매달 비슷하게)</label>
-                <label><input type="radio" name="plan-mode" value="front"> 앞당김 (앞쪽 절반에 몰아서)</label>
+                <legend data-i18n="x.planMode">로컬 계획 방식</legend>
+                <label><input type="radio" name="plan-mode" value="even" checked> <span data-i18n="x.modeEven">균등 분배 (매달 비슷하게)</span></label>
+                <label><input type="radio" name="plan-mode" value="front"> <span data-i18n="x.modeFront">앞당김 (앞쪽 절반에 몰아서)</span></label>
               </fieldset>
             </div>
             <div class="actions">
-              <button class="btn btn-primary" type="button" id="ai-run">AI로 계획 만들기</button>
-              <button class="btn btn-secondary" type="button" id="local-run">AI 없이 로컬 계획 보기</button>
+              <button class="btn btn-primary" type="button" id="ai-run" data-i18n="x.aiRun">AI로 계획 만들기</button>
+              <button class="btn btn-secondary" type="button" id="local-run" data-i18n="x.localRun">AI 없이 로컬 계획 보기</button>
             </div>
             <p class="muted" id="ai-status" role="status"></p>
           </div>
           <div id="plan-out" aria-live="polite"></div>
-          <p class="disclaimer">계획은 참고용 제안입니다. 실제 이수 가능 여부와 과정 선택은 본인이 확인하세요.</p>
+          <p class="disclaimer" data-i18n="x.aiDisclaimer">계획은 참고용 제안입니다. 실제 이수 가능 여부와 과정 선택은 본인이 확인하세요.</p>
         </section>
       </div>
     </section>
 
     <section id="faq" class="section" aria-labelledby="faq-title">
       <div class="wrap narrow">
-        <h2 id="faq-title">자주 묻는 질문</h2>
-        <details class="faq card">
-          <summary>데이터는 어디에 저장되나요?</summary>
-          <p>이 브라우저의 로컬 저장소(localStorage)에만 저장합니다. 서버로 보내지 않습니다. 브라우저 데이터를 지우거나 다른 기기를 쓰면 보이지 않으니 JSON 백업을 받아 두세요.</p>
-        </details>
-        <details class="faq card">
-          <summary>템플릿의 주기와 시간은 맞나요?</summary>
-          <p>모두 예시 · 확인 필요 값입니다. 템플릿은 입력 칸을 채우는 출발점이며, 자격 탭의 편집 칸에서 주기와 필요 학점을 바꿀 수 있습니다. 실제 값은 발급 기관과 최신 법령에서 확인하세요.</p>
-        </details>
-        <details class="faq card">
-          <summary>알림이 자동으로 울리나요?</summary>
-          <p>이 앱은 서버가 없어서 스스로 알림을 보내지 못합니다. .ics 파일을 달력 앱에 가져와야 알림이 등록됩니다. 앱을 열면 기한 임박 항목을 상단에 표시합니다.</p>
-        </details>
-        <details class="faq card">
-          <summary>가족 자격을 한 앱에서 나눠 볼 수 있나요?</summary>
-          <p>자격마다 보유자 이름을 적으면 대시보드에서 보유자별로 보고, 보유자별 요약 카드를 눌러 거를 수 있습니다. 보유자 이름은 달력 파일과 AI 기능으로 보내지 않습니다.</p>
-        </details>
-        <details class="faq card">
-          <summary>학점은 어떤 기간을 기준으로 세나요?</summary>
-          <p>만료일을 주기 종료일로 보고, 종료일 − 주기(년) + 1일부터 종료일까지 기록한 학점을 이번 주기로 집계합니다. 기간 밖 기록은 따로 표시하며 합계에 넣지 않습니다. 이월 학점은 직접 입력합니다.</p>
-        </details>
-        <details class="faq card">
-          <summary>CSV를 가져오다 오류가 나면 어떻게 하나요?</summary>
-          <p>오류가 난 행만 건너뛰고 나머지 정상 행은 추가합니다. 행 번호와 이유를 보여 주므로 그 행을 고쳐서 다시 가져오세요. 자격명이 같은 자격이 두 개 있으면 그 행은 가져오지 않습니다.</p>
-        </details>
-        <details class="faq card">
-          <summary>AI 기능은 꼭 써야 하나요?</summary>
-          <p>아닙니다. 로컬 계획은 API 키 없이 동작합니다. AI 기능을 쓰려면 본인 Anthropic API 키를 직접 넣어야 하며, 이때 위에 적힌 최소한의 숫자 정보만 보냅니다.</p>
-        </details>
+        <h2 id="faq-title" data-i18n="x.faqTitle">자주 묻는 질문</h2>
+        <div class="faq">
+          <details><summary data-i18n="x.q1">데이터는 어디에 저장되나요?</summary><p data-i18n="x.a1">이 브라우저의 로컬 저장소(localStorage)에만 저장합니다. 서버로 보내지 않습니다. 브라우저 데이터를 지우거나 다른 기기를 쓰면 보이지 않으니 JSON 백업을 받아 두세요.</p></details>
+          <details><summary data-i18n="x.q2">템플릿의 주기와 시간은 맞나요?</summary><p data-i18n="x.a2">모두 예시 · 확인 필요 값입니다. 템플릿은 입력 칸을 채우는 출발점이며, 자격 탭의 편집 칸에서 주기와 필요 학점을 바꿀 수 있습니다. 실제 값은 발급 기관과 최신 법령에서 확인하세요.</p></details>
+          <details><summary data-i18n="x.q3">알림이 자동으로 울리나요?</summary><p data-i18n="x.a3">이 앱은 서버가 없어서 스스로 알림을 보내지 못합니다. .ics 파일을 달력 앱에 가져와야 알림이 등록됩니다. 앱을 열면 기한 임박 항목을 상단에 표시합니다.</p></details>
+          <details><summary data-i18n="x.q4">가족 자격을 한 앱에서 나눠 볼 수 있나요?</summary><p data-i18n="x.a4">자격마다 보유자 이름을 적으면 대시보드에서 보유자별로 보고, 보유자별 요약 카드를 눌러 거를 수 있습니다. 보유자 이름은 달력 파일과 AI 기능으로 보내지 않습니다.</p></details>
+          <details><summary data-i18n="x.q5">학점은 어떤 기간을 기준으로 세나요?</summary><p data-i18n="x.a5">만료일을 주기 종료일로 보고, 종료일 − 주기(년) + 1일부터 종료일까지 기록한 학점을 이번 주기로 집계합니다. 기간 밖 기록은 따로 표시하며 합계에 넣지 않습니다. 이월 학점은 직접 입력합니다.</p></details>
+          <details><summary data-i18n="x.q6">CSV를 가져오다 오류가 나면 어떻게 하나요?</summary><p data-i18n="x.a6">오류가 난 행만 건너뛰고 나머지 정상 행은 추가합니다. 행 번호와 이유를 보여 주므로 그 행을 고쳐서 다시 가져오세요. 자격명이 같은 자격이 두 개 있으면 그 행은 가져오지 않습니다.</p></details>
+          <details><summary data-i18n="x.q7">AI 기능은 꼭 써야 하나요?</summary><p data-i18n="x.a7">아닙니다. 로컬 계획은 API 키 없이 동작합니다. AI 기능을 쓰려면 본인 Anthropic API 키를 직접 넣어야 하며, 이때 위에 적힌 최소한의 숫자 정보만 보냅니다.</p></details>
+        </div>
       </div>
     </section>
   </main>
@@ -576,13 +517,13 @@
     <div class="wrap footer-grid">
       <div>
         <p class="footer-brand">licensetrack</p>
-        <p class="muted">자격·면허 갱신과 보수교육을 놓치지 않도록 돕는 개인용 트래커입니다.</p>
+        <p class="muted" data-i18n="x.footBrand">자격·면허 갱신과 보수교육을 놓치지 않도록 돕는 개인용 트래커입니다.</p>
       </div>
       <div>
-        <p class="privacy"><strong>데이터는 이 브라우저에만 저장됩니다.</strong> 서버 계정이나 업로드는 없습니다.</p>
-        <p class="muted small">본 서비스의 계산 결과와 템플릿은 참고용입니다. 법률, 세무, 재무 자문이 아니며 실제 기한과 요건은 발급 기관에서 확인하세요.</p>
+        <p class="privacy"><strong data-i18n="x.footPrivacy">데이터는 이 브라우저에만 저장됩니다.</strong> <span data-i18n="x.footPrivacy2">서버 계정이나 업로드는 없습니다.</span></p>
+        <p class="muted small" data-i18n="x.footDisclaimer">본 서비스의 계산 결과와 템플릿은 참고용입니다. 법률, 세무, 재무 자문이 아니며 실제 기한과 요건은 발급 기관에서 확인하세요.</p>
       </div>
-      <p class="muted small copyright">© 2026 licensetrack. 모든 권리 보유.</p>
+      <p class="muted small copyright" data-i18n="x.copy">© 2026 licensetrack. 모든 권리 보유.</p>
     </div>
   </footer>
 

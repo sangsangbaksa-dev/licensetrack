@@ -1,5 +1,7 @@
 // AI 보수교육 계획 도우미: 입력 최소화, 프롬프트, 응답 검증, 로컬 폴백. 네트워크 호출은 app.js 에서 합니다.
+// 사용자 문구는 t() 로 가져옵니다. AI 프롬프트는 응답 언어를 현재 언어로 지정합니다.
 import { diffDays, addMonths, calendarMonthsInclusive } from './logic.js';
+import { t, getLang, LANGS } from './i18n.js';
 
 export const AI_LIMITS = {
   model: 'claude-haiku-5-5',
@@ -54,7 +56,7 @@ export function monthLabels(today, n) {
 export function anonymizeForAi(items) {
   const picked = items.filter((x) => x.aiOk).slice(0, AI_LIMITS.maxItems);
   return {
-    unit: '학점(시간)',
+    unit: t('ai.unit'),
     items: picked.map((x) => ({
       id: x.key,
       remaining: x.remaining,
@@ -69,12 +71,14 @@ export function anonymizeForAi(items) {
 }
 
 export function buildPrompt(payload) {
+  const language = LANGS[getLang()]?.name ?? 'English';
   return [
-    '아래 JSON은 자격 보수교육의 남은 학점 요약입니다. 항목 ID 는 익명 기호입니다.',
-    '각 항목마다 "months" 개월 동안 매달 이수할 학점을 나눠 주세요.',
-    '규칙: 배열 길이는 months 와 같고, 각 값은 0 이상의 숫자이며, 합계는 remaining 과 같아야 합니다. 0.5 단위를 권장합니다.',
-    '설명 문장 없이 JSON 객체만 출력하세요. 예: {"A1":[2,2,2]}',
-    '입력:',
+    t('ai.prompt.l1'),
+    t('ai.prompt.l2'),
+    t('ai.prompt.l3'),
+    t('ai.prompt.l4', { language }),
+    '{"A1":[2,2,2]}',
+    t('ai.prompt.input'),
     JSON.stringify(payload),
   ].join('\n');
 }
@@ -89,30 +93,30 @@ export function parsePlanReply(text, payload) {
   const s = String(text ?? '');
   const a = s.indexOf('{');
   const b = s.lastIndexOf('}');
-  if (a < 0 || b <= a) return { plans, errors: ['응답에서 JSON을 찾지 못했습니다.'] };
+  if (a < 0 || b <= a) return { plans, errors: [t('ai.err.noJson')] };
   let obj;
   try {
     obj = JSON.parse(s.slice(a, b + 1));
   } catch {
-    return { plans, errors: ['응답 JSON 형식이 잘못되었습니다.'] };
+    return { plans, errors: [t('ai.err.badJson')] };
   }
   if (!obj || typeof obj !== 'object' || Array.isArray(obj)) {
-    return { plans, errors: ['응답 최상위는 객체여야 합니다.'] };
+    return { plans, errors: [t('ai.err.topObj')] };
   }
   const byId = new Map(payload.items.map((x) => [x.id, x]));
   for (const key of Object.keys(obj)) {
     const meta = byId.get(key);
     if (!meta) {
-      errors.push(`알 수 없는 항목 ID: ${key.slice(0, 10)}`);
+      errors.push(t('ai.err.unknownId', { id: key.slice(0, 10) }));
       continue;
     }
     const arr = obj[key];
-    if (!Array.isArray(arr)) { errors.push(`${key}: 배열이 아닙니다.`); continue; }
-    if (arr.length !== meta.months) { errors.push(`${key}: 길이가 ${meta.months}개월과 다릅니다.`); continue; }
-    if (arr.some((v) => typeof v !== 'number' || !Number.isFinite(v))) { errors.push(`${key}: 숫자가 아닌 값이 있습니다.`); continue; }
-    if (arr.some((v) => v < 0 || v > meta.remaining + 0.01)) { errors.push(`${key}: 값은 0 이상이고 남은 학점 이하여야 합니다.`); continue; }
+    if (!Array.isArray(arr)) { errors.push(t('ai.err.notArray', { key })); continue; }
+    if (arr.length !== meta.months) { errors.push(t('ai.err.length', { key, m: meta.months })); continue; }
+    if (arr.some((v) => typeof v !== 'number' || !Number.isFinite(v))) { errors.push(t('ai.err.notNumber', { key })); continue; }
+    if (arr.some((v) => v < 0 || v > meta.remaining + 0.01)) { errors.push(t('ai.err.range', { key })); continue; }
     const sum = arr.reduce((p, v) => p + v, 0);
-    if (Math.abs(sum - meta.remaining) > 0.05) { errors.push(`${key}: 합계가 남은 학점(${meta.remaining})과 다릅니다.`); continue; }
+    if (Math.abs(sum - meta.remaining) > 0.05) { errors.push(t('ai.err.sum', { key, r: meta.remaining })); continue; }
     plans[key] = arr.map(round2);
   }
   return { plans, errors };

@@ -1,16 +1,32 @@
 // licensetrack 순수 로직 (DOM 없음). 테스트는 tests/logic.test.js 에서 실행합니다.
+// 사용자에게 보이는 문구는 i18n.js 의 t() 로 가져옵니다. 기본 언어는 ko 입니다.
+// CSV 머리글(열 이름)은 파일 형식이므로 한국어로 고정합니다 (가져오기 호환).
+
+import { t } from './i18n.js';
 
 /* ------------------------------------------------------------------ *
  * 상수 (한 곳에서 수정). 기준일이 바뀌면 아래 기준 라벨도 함께 바꾸세요.
  * ------------------------------------------------------------------ */
+const tplItem = (id, cycleYears, requiredCredits) => Object.freeze({
+  id,
+  cycleYears,
+  requiredCredits,
+  get label() { return t(`tpl.${id}.label`); },
+  get name() { return t(`tpl.${id}.name`); },
+  get issuer() { return t(`tpl.${id}.issuer`); },
+  get note() { return t(`tpl.${id}.note`); },
+});
+
 export const CONSTANTS = {
-  기준: '기준: 앱 작성 시점(2026-11). 템플릿 주기·이수시간은 모두 예시이며 발급 기관과 최신 법령에서 반드시 확인하세요.',
-  rules: {
-    cycle: '주기 종료일 = 만료일. 주기 시작일 = 만료일 − 주기(년) + 1일.',
-    leapYear: '말일 보정: 2월 29일 + 1년 = 2월 28일, 1월 31일 + 1개월 = 2월 말일.',
-    urgency: '만료일 당일은 "30일 이내". 0~30일 남음 = 30일 이내, 31~90일 = 90일 이내, 91일 이상 = 여유, 만료일 지남 = 만료.',
-    pace: '월 페이스 = 주기 시작일 이후 이수 학점 ÷ 경과 개월(최소 1개월). 남은 기간이 1개월 미만이면 1개월로 계산.',
-    projection: '예상 합계 = 현재 합계 + 월 페이스 × 남은 개월. 예상 부족 = 필요 학점 − 예상 합계(0 이상).',
+  get 기준() { return t('lic.basis'); },
+  get rules() {
+    return {
+      cycle: t('lic.rule.cycle'),
+      leapYear: t('lic.rule.leapYear'),
+      urgency: t('lic.rule.urgency'),
+      pace: t('lic.rule.pace'),
+      projection: t('lic.rule.projection'),
+    };
   },
   urgency: { soonDays: 30, warnDays: 90 },
   defaultLeadDays: [180, 90, 30, 7],
@@ -37,14 +53,14 @@ export const CONSTANTS = {
   },
   // 예시 템플릿: 폼에 미리 채워 넣는 값일 뿐이며 사용자가 수정해야 합니다.
   templates: [
-    { id: 'blank', label: '직접 입력', name: '', issuer: '', cycleYears: 0, requiredCredits: null, note: '' },
-    { id: 'nurse', label: '예시: 간호사 면허 보수교육', name: '간호사 면허 (예시)', issuer: '발급 기관 확인 필요', cycleYears: 3, requiredCredits: 8, note: '예시 값입니다. 보수교육 주기와 시간은 최신 법령에서 확인하세요.' },
-    { id: 'realtor', label: '예시: 공인중개사 실무교육', name: '공인중개사 (예시)', issuer: '시·도지사 / 교육기관 확인 필요', cycleYears: 2, requiredCredits: 8, note: '예시 값입니다. 실무교육 대상 여부와 시간을 확인하세요.' },
-    { id: 'safety', label: '예시: 안전관리자 보수교육', name: '산업안전 관리자 (예시)', issuer: '안전보건 교육기관 확인 필요', cycleYears: 2, requiredCredits: 24, note: '예시 값입니다. 직무교육 주기와 시간을 확인하세요.' },
-    { id: 'social', label: '예시: 사회복지사 보수교육', name: '사회복지사 1급 (예시)', issuer: '한국사회복지사협회 등 확인 필요', cycleYears: 3, requiredCredits: 12, note: '예시 값입니다. 보수교육 기준을 확인하세요.' },
-    { id: 'cpe', label: '예시: 세무·회계 CPE', name: '세무사 / 회계사 (예시)', issuer: '소속 협회 확인 필요', cycleYears: 1, requiredCredits: 15, note: '예시 값입니다. 연간 CPE 기준을 협회에서 확인하세요.' },
-    { id: 'construction', label: '예시: 건설기술인 교육', name: '건설기술인 (예시)', issuer: '건설기술인협회 확인 필요', cycleYears: 5, requiredCredits: 32, note: '예시 값입니다. 교육 주기와 시간을 확인하세요.' },
-    { id: 'hazmat', label: '예시: 위험물 안전관리자 실무교육', name: '위험물 안전관리자 (예시)', issuer: '한국소방안전원 확인 필요', cycleYears: 2, requiredCredits: 8, note: '예시 값입니다. 실무교육 주기와 시간을 확인하세요.' },
+    tplItem('blank', 0, null),
+    tplItem('nurse', 3, 8),
+    tplItem('realtor', 2, 8),
+    tplItem('safety', 2, 24),
+    tplItem('social', 3, 12),
+    tplItem('cpe', 1, 15),
+    tplItem('construction', 5, 32),
+    tplItem('hazmat', 2, 8),
   ],
   appVersion: 1,
 };
@@ -95,9 +111,9 @@ export function diffDays(a, b) {
 /** 말일 보정 포함 개월 더하기: 1월 31일 + 1개월 = 2월 말일 */
 export function addMonths(s, n) {
   const [y, m, d] = s.split('-').map(Number);
-  const t = y * 12 + (m - 1) + n;
-  const ny = Math.floor(t / 12);
-  const nm = t - ny * 12 + 1;
+  const t0 = y * 12 + (m - 1) + n;
+  const ny = Math.floor(t0 / 12);
+  const nm = t0 - ny * 12 + 1;
   return fmtDate(ny, nm, Math.min(d, daysInMonth(ny, nm)));
 }
 
@@ -210,11 +226,11 @@ export function urgencyBucket(daysLeft) {
 export const BUCKET_ORDER = ['expired', 'd30', 'd90', 'ok', 'none'];
 
 export const BUCKET_LABEL = {
-  expired: '만료',
-  d30: '30일 이내',
-  d90: '90일 이내',
-  ok: '여유',
-  none: '만료일 없음',
+  get expired() { return t('lic.bucket.expired'); },
+  get d30() { return t('lic.bucket.d30'); },
+  get d90() { return t('lic.bucket.d90'); },
+  get ok() { return t('lic.bucket.ok'); },
+  get none() { return t('lic.bucket.none'); },
 };
 
 /** 대시보드용 행 목록, 버킷 집계, 타임라인 */
@@ -228,7 +244,7 @@ export function buildDashboard(items, credits, today) {
   rows.sort((a, b) =>
     rank[a.bucket] - rank[b.bucket] ||
     (a.daysLeft ?? 1e9) - (b.daysLeft ?? 1e9) ||
-    a.item.name.localeCompare(b.item.name, 'ko'));
+    a.item.name.localeCompare(b.item.name, t('locale.collate')));
   const counts = Object.fromEntries(BUCKET_ORDER.map((b) => [b, 0]));
   for (const r of rows) counts[r.bucket]++;
   const timeline = rows
@@ -247,8 +263,12 @@ export function holderOf(item) {
 
 /** 보유자 이름순, 미지정('')은 맨 뒤 */
 function sortHolderKeys(keys) {
-  const named = keys.filter((k) => k !== '').sort((a, b) => a.localeCompare(b, 'ko'));
+  const named = keys.filter((k) => k !== '').sort((a, b) => a.localeCompare(b, t('locale.collate')));
   return keys.includes('') ? [...named, ''] : named;
+}
+
+export function holderLabel(h) {
+  return h || t('lic.holderNone');
 }
 
 /** 필터 선택지: 보유자별 항목 수 (항목이 없으면 빈 목록) */
@@ -258,7 +278,7 @@ export function holderGroups(items) {
     const h = holderOf(it);
     count.set(h, (count.get(h) || 0) + 1);
   }
-  return sortHolderKeys([...count.keys()]).map((h) => ({ holder: h, label: h || '보유자 미지정', count: count.get(h) }));
+  return sortHolderKeys([...count.keys()]).map((h) => ({ holder: h, label: holderLabel(h), count: count.get(h) }));
 }
 
 /** 대시보드 행을 보유자로 거름. holder 가 null/undefined 면 전체 */
@@ -273,7 +293,7 @@ export function holderSummary(rows) {
   for (const r of rows) {
     const h = holderOf(r.item);
     if (!by.has(h)) {
-      by.set(h, { holder: h, label: h || '보유자 미지정', total: 0, expired: 0, d30: 0, d90: 0, atRisk: 0, next: null });
+      by.set(h, { holder: h, label: holderLabel(h), total: 0, expired: 0, d30: 0, d90: 0, atRisk: 0, next: null });
     }
     const s = by.get(h);
     s.total++;
@@ -292,12 +312,12 @@ export function holderSummary(rows) {
  * 알림: 리드타임 기준으로 "지금 알려야 할" 항목
  * ------------------------------------------------------------------ */
 export function normalizeLeads(v) {
-  if (!Array.isArray(v)) throw new Error('알림 기간은 숫자 목록이어야 합니다.');
-  if (v.length > CONSTANTS.limits.leadCount) throw new Error(`알림 기간은 최대 ${CONSTANTS.limits.leadCount}개입니다.`);
+  if (!Array.isArray(v)) throw new Error(t('lic.err.leadType'));
+  if (v.length > CONSTANTS.limits.leadCount) throw new Error(t('lic.err.leadMax', { n: CONSTANTS.limits.leadCount }));
   const out = new Set();
   for (const x of v) {
     if (!Number.isInteger(x) || x < 1 || x > CONSTANTS.limits.leadDays) {
-      throw new Error(`알림 기간은 1~${CONSTANTS.limits.leadDays}일 사이 정수여야 합니다.`);
+      throw new Error(t('lic.err.leadRange', { max: CONSTANTS.limits.leadDays }));
     }
     out.add(x);
   }
@@ -306,9 +326,9 @@ export function normalizeLeads(v) {
 
 /** 알림 기간 프리셋. 직접 입력값이 프리셋과 같으면 그 이름을 표시 */
 export const LEAD_PRESETS = [
-  { id: 'standard', label: '표준 180·90·30·7일 전', leads: [180, 90, 30, 7] },
-  { id: 'short', label: '짧게 30·14·7·1일 전', leads: [30, 14, 7, 1] },
-  { id: 'long', label: '길게 365·180·90·30·14·7일 전', leads: [365, 180, 90, 30, 14, 7] },
+  Object.freeze({ id: 'standard', leads: [180, 90, 30, 7], get label() { return t('lic.lead.standard'); } }),
+  Object.freeze({ id: 'short', leads: [30, 14, 7, 1], get label() { return t('lic.lead.short'); } }),
+  Object.freeze({ id: 'long', leads: [365, 180, 90, 30, 14, 7], get label() { return t('lic.lead.long'); } }),
 ];
 
 const leadKey = (arr) => [...arr].sort((a, b) => b - a).join(',');
@@ -515,7 +535,7 @@ export function buildIcs({ items, leads, today, dtstamp, horizonCycles = CONSTAN
     'PRODID:-//licensetrack//KO//KR',
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH',
-    `X-WR-CALNAME:${icsText('자격·면허 마감')}`,
+    `X-WR-CALNAME:${icsText(t('lic.ics.calName'))}`,
   ];
   const sortedLeads = [...leads].sort((a, b) => b - a);
   for (const item of items) {
@@ -523,22 +543,22 @@ export function buildIcs({ items, leads, today, dtstamp, horizonCycles = CONSTAN
       const ymd = d.replace(/-/g, '');
       const next = addDays(d, 1).replace(/-/g, '');
       const name = icsText(item.name);
-      const req = item.requiredCredits == null ? '기준 없음' : `${item.requiredCredits}`;
+      const req = item.requiredCredits == null ? t('lic.ics.noReq') : `${item.requiredCredits}`;
       lines.push(
         'BEGIN:VEVENT',
         `UID:${item.id}-${ymd}@licensetrack.local`,
         `DTSTAMP:${dtstamp}`,
         `DTSTART;VALUE=DATE:${ymd}`,
         `DTEND;VALUE=DATE:${next}`,
-        `SUMMARY:${icsText(`${item.name} 갱신·학점 마감`)}`,
-        `DESCRIPTION:${icsText(`${item.name}\n마감일 ${d}\n필요 학점: ${req}\n발급기관: ${item.issuer || '-'}`)}`,
+        `SUMMARY:${icsText(t('lic.ics.summary', { name: item.name }))}`,
+        `DESCRIPTION:${icsText(t('lic.ics.desc', { name: item.name, d, req, issuer: item.issuer || '-' }))}`,
         'TRANSP:TRANSPARENT',
       );
       for (const L of sortedLeads) {
         lines.push(
           'BEGIN:VALARM',
           'ACTION:DISPLAY',
-          `DESCRIPTION:${icsText(`${L}일 전 알림: ${name}`)}`,
+          `DESCRIPTION:${icsText(t('lic.ics.alarm', { L, name: item.name }))}`,
           `TRIGGER:-P${L}D`,
           'END:VALARM',
         );
@@ -560,12 +580,13 @@ export function csvCell(v) {
   return s;
 }
 
+// 학점 기록 CSV 머리글: 파일 형식이므로 한국어로 고정합니다.
 export function buildCreditsCsv(items, credits) {
   const names = new Map(items.map((i) => [i.id, i.name]));
   const header = ['자격명', '날짜', '이수시간', '과정명', '제공기관', '분류', '메모'];
   const rows = [...credits]
     .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0))
-    .map((c) => [names.get(c.itemId) ?? '(삭제된 항목)', c.date, c.hours, c.course, c.provider, c.category, c.memo]);
+    .map((c) => [names.get(c.itemId) ?? t('lic.csv.deleted'), c.date, c.hours, c.course, c.provider, c.category, c.memo]);
   return '﻿' + [header, ...rows].map((r) => r.map(csvCell).join(',')).join('\r\n') + '\r\n';
 }
 
@@ -612,7 +633,7 @@ export function parseCsv(text) {
     field += ch;
     i += 1;
   }
-  if (inQuote) throw new ValidationError('따옴표가 닫히지 않은 칸이 있습니다. CSV 형식을 확인하세요.');
+  if (inQuote) throw new ValidationError(t('lic.csv.unclosed'));
   if (field !== '' || row.length) { row.push(field); rows.push(row); }
   return rows.filter((r) => !(r.length === 1 && r[0] === ''));
 }
@@ -631,21 +652,21 @@ export function unescapeCsvCell(v) {
  */
 export function importCreditsCsv(text, { items, existing = [], limit = CONSTANTS.limits.credits } = {}) {
   const fail = (fatal) => ({ ok: false, fatal, total: 0, credits: [], errors: [], skipped: [] });
-  if (typeof text !== 'string' || !text.trim()) return fail('파일 내용이 비어 있습니다.');
-  if (text.length > CSV_LIMITS.maxBytes) return fail('파일이 1MB보다 큽니다.');
+  if (typeof text !== 'string' || !text.trim()) return fail(t('lic.csv.empty'));
+  if (text.length > CSV_LIMITS.maxBytes) return fail(t('lic.csv.tooBig'));
   let rows;
   try {
     rows = parseCsv(text);
   } catch (e) {
     return fail(e.message);
   }
-  if (!rows.length) return fail('읽을 행이 없습니다.');
+  if (!rows.length) return fail(t('lic.csv.noRows'));
   const header = rows[0].map((h) => h.trim());
   const col = Object.fromEntries(CREDIT_CSV_HEADER.map((h) => [h, header.indexOf(h)]));
   const missing = CSV_REQUIRED.filter((h) => col[h] < 0);
-  if (missing.length) return fail(`필수 열이 없습니다: ${missing.join(', ')}. 학점 기록 CSV 내보내기 형식을 확인하세요.`);
+  if (missing.length) return fail(t('lic.csv.missingCols', { cols: missing.join(', ') }));
   const data = rows.slice(1);
-  if (data.length > CSV_LIMITS.maxRows) return fail(`한 번에 ${CSV_LIMITS.maxRows}행까지 가져올 수 있습니다.`);
+  if (data.length > CSV_LIMITS.maxRows) return fail(t('lic.csv.tooManyRows', { n: CSV_LIMITS.maxRows }));
 
   const byName = new Map();
   for (const it of items) {
@@ -665,9 +686,9 @@ export function importCreditsCsv(text, { items, existing = [], limit = CONSTANTS
     const get = (name) => (col[name] >= 0 ? unescapeCsvCell(String(r[col[name]] ?? '')) : '');
     const name = get('자격명').trim();
     const hits = byName.get(name) || [];
-    if (!name) { errors.push({ row, message: '자격명이 비어 있습니다.' }); return; }
-    if (hits.length === 0) { errors.push({ row, message: `등록되지 않은 자격명입니다: ${name.slice(0, 30)}` }); return; }
-    if (hits.length > 1) { errors.push({ row, message: `같은 이름의 자격이 ${hits.length}개 있어 어느 항목인지 정할 수 없습니다: ${name.slice(0, 30)}` }); return; }
+    if (!name) { errors.push({ row, message: t('lic.csv.noName') }); return; }
+    if (hits.length === 0) { errors.push({ row, message: t('lic.csv.unknownName', { name: name.slice(0, 30) }) }); return; }
+    if (hits.length > 1) { errors.push({ row, message: t('lic.csv.dupName', { n: hits.length, name: name.slice(0, 30) }) }); return; }
     let c;
     try {
       c = normalizeCredit({
@@ -685,8 +706,8 @@ export function importCreditsCsv(text, { items, existing = [], limit = CONSTANTS
       return;
     }
     const key = keyOf(c);
-    if (seen.has(key)) { skipped.push({ row, message: '이미 있는 기록과 같아 건너뜀' }); return; }
-    if (capacity <= 0) { errors.push({ row, message: `학점 기록은 최대 ${limit}건까지 가져올 수 있습니다.` }); return; }
+    if (seen.has(key)) { skipped.push({ row, message: t('lic.csv.skipDup') }); return; }
+    if (capacity <= 0) { errors.push({ row, message: t('lic.csv.limit', { n: limit }) }); return; }
     seen.add(key);
     capacity -= 1;
     credits.push(c);
@@ -704,38 +725,38 @@ const NUM_RE = /^-?\d+(\.\d+)?$/;
 function numField(v, label, { min, max, allowEmpty = false, int = false, decimals = 2 }) {
   if (v === '' || v === null || v === undefined) {
     if (allowEmpty) return null;
-    throw new ValidationError(`${label}을(를) 입력하세요.`);
+    throw new ValidationError(t('v.required', { label }));
   }
   let n;
   if (typeof v === 'number') n = v;
   else if (typeof v === 'string' && NUM_RE.test(v.trim())) n = Number(v.trim());
-  else throw new ValidationError(`${label}은(는) 숫자여야 합니다.`);
-  if (!Number.isFinite(n)) throw new ValidationError(`${label}은(는) 유한한 숫자여야 합니다.`);
-  if (n < min || n > max) throw new ValidationError(`${label}은(는) ${min}~${max} 사이여야 합니다.`);
-  if (int && !Number.isInteger(n)) throw new ValidationError(`${label}은(는) 정수여야 합니다.`);
+  else throw new ValidationError(t('v.numType', { label }));
+  if (!Number.isFinite(n)) throw new ValidationError(t('v.finite', { label }));
+  if (n < min || n > max) throw new ValidationError(t('v.range', { label, min, max }));
+  if (int && !Number.isInteger(n)) throw new ValidationError(t('v.int', { label }));
   if (Math.round(n * 10 ** decimals) / 10 ** decimals !== n) {
-    throw new ValidationError(`${label}은(는) 소수점 ${decimals}자리까지 입력할 수 있습니다.`);
+    throw new ValidationError(t('v.decimals', { label, n: decimals }));
   }
   return n;
 }
 
 function textField(v, label, max, { required = false } = {}) {
   if (v === null || v === undefined) v = '';
-  if (typeof v !== 'string') throw new ValidationError(`${label}은(는) 글자여야 합니다.`);
+  if (typeof v !== 'string') throw new ValidationError(t('v.textType', { label }));
   const s = v.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, '').trim();
-  if (required && !s) throw new ValidationError(`${label}을(를) 입력하세요.`);
-  if (s.length > max) throw new ValidationError(`${label}은(는) ${max}자 이하여야 합니다.`);
+  if (required && !s) throw new ValidationError(t('v.required', { label }));
+  if (s.length > max) throw new ValidationError(t('v.maxLen', { label, max }));
   return s;
 }
 
 function dateField(v, label) {
   if (v === null || v === undefined || v === '') return '';
-  if (!isDateStr(v)) throw new ValidationError(`${label}은(는) 실제 존재하는 YYYY-MM-DD 날짜여야 합니다.`);
+  if (!isDateStr(v)) throw new ValidationError(t('v.date', { label }));
   return v;
 }
 
 function idField(v, label = 'ID') {
-  if (typeof v !== 'string' || !/^[A-Za-z0-9_-]{1,64}$/.test(v)) throw new ValidationError(`${label} 형식이 올바르지 않습니다.`);
+  if (typeof v !== 'string' || !/^[A-Za-z0-9_-]{1,64}$/.test(v)) throw new ValidationError(t('v.id', { label }));
   return v;
 }
 
@@ -749,45 +770,45 @@ export function newId() {
 
 /** 자격 항목 입력 정규화. input.id 가 없으면 새 ID 를 부여. */
 export function normalizeItem(input) {
-  if (!input || typeof input !== 'object') throw new ValidationError('항목 데이터가 올바르지 않습니다.');
+  if (!input || typeof input !== 'object') throw new ValidationError(t('v.item'));
   const L = CONSTANTS.limits;
   const item = {
     id: input.id ? idField(input.id) : newId(),
-    name: textField(input.name, '자격명', L.name, { required: true }),
-    issuer: textField(input.issuer, '발급 기관', L.issuer),
-    holder: textField(input.holder, '보유자', L.holder),
-    number: textField(input.number, '자격번호', L.number),
-    issuedOn: dateField(input.issuedOn, '발급일'),
-    expiresOn: dateField(input.expiresOn, '만료일'),
-    cycleYears: numField(input.cycleYears ?? '', '갱신 주기(년)', { min: 0, max: L.cycleYears, allowEmpty: true, int: true }) ?? 0,
-    requiredCredits: numField(input.requiredCredits ?? '', '필요 학점', { min: 0, max: L.requiredCredits, allowEmpty: true }),
-    carryover: numField(input.carryover ?? '', '이월 학점', { min: 0, max: L.carryover, allowEmpty: true }) ?? 0,
-    notes: textField(input.notes, '메모', L.notes),
+    name: textField(input.name, t('f.name'), L.name, { required: true }),
+    issuer: textField(input.issuer, t('f.issuer'), L.issuer),
+    holder: textField(input.holder, t('f.holder'), L.holder),
+    number: textField(input.number, t('f.number'), L.number),
+    issuedOn: dateField(input.issuedOn, t('f.issuedOn')),
+    expiresOn: dateField(input.expiresOn, t('f.expiresOn')),
+    cycleYears: numField(input.cycleYears ?? '', t('f.cycleYears'), { min: 0, max: L.cycleYears, allowEmpty: true, int: true }) ?? 0,
+    requiredCredits: numField(input.requiredCredits ?? '', t('f.requiredCredits'), { min: 0, max: L.requiredCredits, allowEmpty: true }),
+    carryover: numField(input.carryover ?? '', t('f.carryover'), { min: 0, max: L.carryover, allowEmpty: true }) ?? 0,
+    notes: textField(input.notes, t('f.notes'), L.notes),
     createdAt: typeof input.createdAt === 'string' ? input.createdAt.slice(0, 40) : new Date().toISOString(),
   };
   if (!item.expiresOn && !(item.issuedOn && item.cycleYears > 0)) {
-    throw new ValidationError('만료일을 입력하거나, 발급일과 갱신 주기(년)를 함께 입력하세요.');
+    throw new ValidationError(t('v.expiryOrCycle'));
   }
   if (item.issuedOn && item.expiresOn && item.issuedOn > item.expiresOn) {
-    throw new ValidationError('만료일이 발급일보다 빨라요.');
+    throw new ValidationError(t('v.expiryBeforeIssue'));
   }
   return item;
 }
 
 export function normalizeCredit(input) {
-  if (!input || typeof input !== 'object') throw new ValidationError('학점 기록 데이터가 올바르지 않습니다.');
+  if (!input || typeof input !== 'object') throw new ValidationError(t('v.credit'));
   const L = CONSTANTS.limits;
-  const date = dateField(input.date, '이수일');
-  if (!date) throw new ValidationError('이수일을 입력하세요.');
+  const date = dateField(input.date, t('f.date'));
+  if (!date) throw new ValidationError(t('v.dateRequired'));
   return {
     id: input.id ? idField(input.id) : newId(),
-    itemId: idField(input.itemId, '자격 ID'),
+    itemId: idField(input.itemId, t('v.itemId')),
     date,
-    hours: numField(input.hours, '이수 시간(학점)', { min: 0.01, max: L.hours }),
-    course: textField(input.course, '과정명', L.course),
-    provider: textField(input.provider, '제공기관', L.provider),
-    category: textField(input.category, '분류', L.category) || '일반',
-    memo: textField(input.memo, '인증서 메모', L.memo),
+    hours: numField(input.hours, t('f.hours'), { min: 0.01, max: L.hours }),
+    course: textField(input.course, t('f.course'), L.course),
+    provider: textField(input.provider, t('f.provider'), L.provider),
+    category: textField(input.category, t('f.category'), L.category) || t('lic.defaultCategory'),
+    memo: textField(input.memo, t('f.certMemo'), L.memo),
     createdAt: typeof input.createdAt === 'string' ? input.createdAt.slice(0, 40) : new Date().toISOString(),
   };
 }
@@ -798,25 +819,25 @@ export function normalizeCredit(input) {
  * 기본값과 같아지면 저장하지 않습니다. 라벨의 "예시" 표기는 항상 유지됩니다.
  * ------------------------------------------------------------------ */
 export function templateDefaults() {
-  return CONSTANTS.templates.filter((t) => t.id !== 'blank');
+  return CONSTANTS.templates.filter((x) => x.id !== 'blank');
 }
 
 /** 사용자 수정값 검증. 기본값과 같은 항목은 버리고, 알 수 없는 템플릿 ID 는 거부 */
 export function normalizeTemplateOverrides(v) {
   if (v === undefined || v === null) return {};
-  if (typeof v !== 'object' || Array.isArray(v)) throw new ValidationError('템플릿 설정은 객체여야 합니다.');
-  const known = new Map(templateDefaults().map((t) => [t.id, t]));
+  if (typeof v !== 'object' || Array.isArray(v)) throw new ValidationError(t('v.templateObj'));
+  const known = new Map(templateDefaults().map((x) => [x.id, x]));
   const out = {};
   for (const id of Object.keys(v)) {
     const base = known.get(id);
-    if (!base) throw new ValidationError(`알 수 없는 템플릿입니다: ${String(id).slice(0, 20)}`);
+    if (!base) throw new ValidationError(t('v.templateUnknown', { id: String(id).slice(0, 20) }));
     const o = v[id];
-    if (!o || typeof o !== 'object' || Array.isArray(o)) throw new ValidationError(`${base.name}: 값 형식이 올바르지 않습니다.`);
-    const cycleYears = numField(o.cycleYears ?? base.cycleYears, `${base.name} 갱신 주기(년)`,
+    if (!o || typeof o !== 'object' || Array.isArray(o)) throw new ValidationError(t('v.templateShape', { name: base.name }));
+    const cycleYears = numField(o.cycleYears ?? base.cycleYears, t('f.tplCycle', { name: base.name }),
       { min: 0, max: CONSTANTS.limits.cycleYears, int: true });
     const rq = 'requiredCredits' in o ? o.requiredCredits : base.requiredCredits;
     const requiredCredits = rq === null || rq === '' ? null
-      : numField(rq, `${base.name} 필요 학점`, { min: 0, max: CONSTANTS.limits.requiredCredits });
+      : numField(rq, t('f.tplRequired', { name: base.name }), { min: 0, max: CONSTANTS.limits.requiredCredits });
     if (cycleYears !== base.cycleYears || requiredCredits !== base.requiredCredits) {
       out[id] = { cycleYears, requiredCredits };
     }
@@ -826,12 +847,16 @@ export function normalizeTemplateOverrides(v) {
 
 /** 기본값에 사용자 수정값을 덮어쓴 템플릿 목록. edited 는 수정 여부 */
 export function templatesWithOverrides(overrides = {}) {
-  return templateDefaults().map((t) => {
-    const o = overrides[t.id];
+  return templateDefaults().map((x) => {
+    const o = overrides[x.id];
     return {
-      ...t,
-      cycleYears: o ? o.cycleYears : t.cycleYears,
-      requiredCredits: o ? o.requiredCredits : t.requiredCredits,
+      id: x.id,
+      label: x.label,
+      name: x.name,
+      issuer: x.issuer,
+      note: x.note,
+      cycleYears: o ? o.cycleYears : x.cycleYears,
+      requiredCredits: o ? o.requiredCredits : x.requiredCredits,
       edited: Boolean(o),
     };
   });
@@ -870,27 +895,27 @@ export function buildBackup({ items, credits, leads, templates = {}, now = new D
 export function validateBackup(raw) {
   const errors = [];
   const fail = (msg) => ({ ok: false, errors: [msg], data: null });
-  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return fail('백업 파일 형식이 올바르지 않습니다.');
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return fail(t('lic.backup.notObj'));
   if (raw.app !== 'licensetrack' || raw.schema !== CONSTANTS.appVersion) {
-    return fail('licensetrack 백업 파일(schema 1)이 아닙니다.');
+    return fail(t('lic.backup.notLic'));
   }
   const L = CONSTANTS.limits;
-  if (!Array.isArray(raw.items)) return fail('items 목록이 없습니다.');
-  if (!Array.isArray(raw.credits)) return fail('credits 목록이 없습니다.');
-  if (raw.items.length > L.items) return fail(`자격 항목은 최대 ${L.items}개까지 가져올 수 있습니다.`);
-  if (raw.credits.length > L.credits) return fail(`학점 기록은 최대 ${L.credits}개까지 가져올 수 있습니다.`);
+  if (!Array.isArray(raw.items)) return fail(t('lic.backup.noItems'));
+  if (!Array.isArray(raw.credits)) return fail(t('lic.backup.noCredits'));
+  if (raw.items.length > L.items) return fail(t('lic.backup.maxItems', { n: L.items }));
+  if (raw.credits.length > L.credits) return fail(t('lic.backup.maxCredits', { n: L.credits }));
 
   let leads = CONSTANTS.defaultLeadDays;
   try {
     if (raw.settings && raw.settings.leads !== undefined) leads = normalizeLeads(raw.settings.leads);
   } catch (e) {
-    errors.push(`알림 설정: ${e.message}`);
+    errors.push(t('lic.backup.leads', { e: e.message }));
   }
   let templates = {};
   try {
     if (raw.settings && raw.settings.templates !== undefined) templates = normalizeTemplateOverrides(raw.settings.templates);
   } catch (e) {
-    errors.push(`템플릿 설정: ${e.message}`);
+    errors.push(t('lic.backup.tpl', { e: e.message }));
   }
 
   const items = [];
@@ -898,11 +923,11 @@ export function validateBackup(raw) {
   raw.items.forEach((it, i) => {
     try {
       const n = normalizeItem(it);
-      if (ids.has(n.id)) throw new ValidationError('중복된 ID입니다.');
+      if (ids.has(n.id)) throw new ValidationError(t('v.dupId'));
       ids.add(n.id);
       items.push(n);
     } catch (e) {
-      errors.push(`항목 ${i + 1}: ${e.message}`);
+      errors.push(t('lic.backup.item', { i: i + 1, e: e.message }));
     }
   });
 
@@ -910,10 +935,10 @@ export function validateBackup(raw) {
   raw.credits.forEach((c, i) => {
     try {
       const n = normalizeCredit(c);
-      if (!ids.has(n.itemId)) throw new ValidationError('존재하지 않는 자격 항목을 가리킵니다.');
+      if (!ids.has(n.itemId)) throw new ValidationError(t('v.noItemRef'));
       credits.push(n);
     } catch (e) {
-      errors.push(`학점 기록 ${i + 1}: ${e.message}`);
+      errors.push(t('lic.backup.credit', { i: i + 1, e: e.message }));
     }
   });
 
@@ -924,9 +949,11 @@ export function validateBackup(raw) {
 /* ------------------------------------------------------------------ *
  * 중복 의심 자격: 이름(공백·대소문자·"(예시)" 표기 무시) 또는 자격 번호(하이픈·공백 무시)가 같으면 의심
  * ------------------------------------------------------------------ */
+const EXAMPLE_TAG_RE = /\((예시|example|ejemplo|例|示例)\)/g;
+
 export function normalizeLicenseName(s) {
   return String(s ?? '').normalize('NFC')
-    .replace(/\(예시\)/g, '')
+    .replace(EXAMPLE_TAG_RE, '')
     .replace(/[\s\-·.,()[\]]/g, '')
     .toLowerCase();
 }
@@ -1048,6 +1075,7 @@ export function buildPrintRows(items, credits, today) {
 /* ------------------------------------------------------------------ *
  * 자격 현황 CSV (항목별 한 줄). 인쇄용 행(buildPrintRows)과 같은 계산을 씁니다.
  * 수식 주입 방지는 csvCell이 맡고, BOM과 CRLF는 학점 CSV와 같습니다.
+ * 머리글은 파일 형식이므로 한국어로 고정합니다.
  * ------------------------------------------------------------------ */
 export const STATUS_CSV_HEADER = ['자격명', '보유자', '발급 기관', '만료일', '남은 일수', '상태', '주기 시작', '필요 학점', '이수 학점'];
 
@@ -1063,6 +1091,5 @@ export function buildStatusCsv(items, credits, today) {
     r.required ?? '',
     r.earned ?? '',
   ]);
-  return '\uFEFF' + [STATUS_CSV_HEADER, ...rows].map((r) => r.map(csvCell).join(',')).join('\r\n') + '\r\n';
+  return '﻿' + [STATUS_CSV_HEADER, ...rows].map((r) => r.map(csvCell).join(',')).join('\r\n') + '\r\n';
 }
-
