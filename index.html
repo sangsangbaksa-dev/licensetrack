@@ -265,6 +265,18 @@
           <ul id="credit-list" class="stack-list"></ul>
           <p id="credit-empty" class="muted" hidden>아직 기록이 없습니다.</p>
           <div class="actions"><button class="btn btn-secondary" type="button" id="csv-btn">학점 기록 CSV 저장 (전체)</button></div>
+
+          <div class="card form">
+            <h3>학점 기록 CSV 가져오기</h3>
+            <p>내보내기로 받은 CSV(자격명, 날짜, 이수시간, 과정명, 제공기관, 분류, 메모)를 읽습니다. 자격명은 등록된 이름과 정확히 같아야 합니다. 잘못된 행은 건너뛰고 행 번호와 이유를 보여 줍니다. 정상 행만 추가되며 기존 기록은 바뀌지 않습니다.</p>
+            <div class="field">
+              <label for="csv-file">CSV 파일 선택</label>
+              <input id="csv-file" type="file" accept=".csv,text/csv">
+              <p class="hint">행 번호는 시트와 같이 1행이 머리글입니다. 칸 안에 줄바꿈이 있으면 실제 줄과 어긋날 수 있습니다.</p>
+            </div>
+            <div id="csv-result" role="status"></div>
+            <div class="actions"><button class="btn btn-primary" type="button" id="csv-commit" hidden>정상 행 가져오기</button></div>
+          </div>
         </section>
 
         <!-- 알림 -->

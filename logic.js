@@ -570,6 +570,131 @@ export function buildCreditsCsv(items, credits) {
 }
 
 /* ------------------------------------------------------------------ *
+ * CSV 가져오기 (학점 기록). 행마다 오류를 따로 보고하고, 정상 행만 가져올 수 있음.
+ * 내보내기 형식(buildCreditsCsv)을 그대로 읽습니다.
+ * ------------------------------------------------------------------ */
+export const CSV_LIMITS = { maxBytes: 1024 * 1024, maxRows: 2000 };
+export const CREDIT_CSV_HEADER = ['자격명', '날짜', '이수시간', '과정명', '제공기관', '분류', '메모'];
+const CSV_REQUIRED = ['자격명', '날짜', '이수시간'];
+
+/** RFC 4180 수준 파서: 따옴표 안의 쉼표·줄바꿈, "" 이스케이프, CRLF/LF, BOM 제거, 빈 줄 제거 */
+export function parseCsv(text) {
+  let s = String(text ?? '');
+  if (s.charCodeAt(0) === 0xFEFF) s = s.slice(1);
+  const rows = [];
+  let row = [];
+  let field = '';
+  let inQuote = false;
+  let i = 0;
+  while (i < s.length) {
+    const ch = s[i];
+    if (inQuote) {
+      if (ch === '"') {
+        if (s[i + 1] === '"') { field += '"'; i += 2; continue; }
+        inQuote = false;
+        i += 1;
+        continue;
+      }
+      field += ch;
+      i += 1;
+      continue;
+    }
+    if (ch === '"' && field === '') { inQuote = true; i += 1; continue; }
+    if (ch === ',') { row.push(field); field = ''; i += 1; continue; }
+    if (ch === '\r' || ch === '\n') {
+      row.push(field);
+      rows.push(row);
+      row = [];
+      field = '';
+      i += ch === '\r' && s[i + 1] === '\n' ? 2 : 1;
+      continue;
+    }
+    field += ch;
+    i += 1;
+  }
+  if (inQuote) throw new ValidationError('따옴표가 닫히지 않은 칸이 있습니다. CSV 형식을 확인하세요.');
+  if (field !== '' || row.length) { row.push(field); rows.push(row); }
+  return rows.filter((r) => !(r.length === 1 && r[0] === ''));
+}
+
+/** csvCell 이 수식 주입 방지를 위해 앞에 붙인 ' 를 되돌림 (= + - @ 탭 CR 로 시작하는 경우만) */
+export function unescapeCsvCell(v) {
+  return /^'[=+\-@\t\r]/.test(v) ? v.slice(1) : v;
+}
+
+/**
+ * 학점 기록 CSV 를 검증하고 행별 결과를 돌려줌. 저장하지 않음 (호출 측이 ok 행만 추가).
+ * - items: 현재 자격 목록. 자격명은 정확히 일치해야 하며, 같은 이름이 둘이면 오류.
+ * - existing: 현재 학점 기록. 자격·날짜·시간·과정·기관이 같은 행은 중복으로 건너뜀.
+ * - limit: 학점 기록 최대 개수. 넘는 행은 오류로 보고.
+ * row 는 시트와 같은 번호(1행 = 머리글)입니다. 칸 안에 줄바꿈이 있으면 실제 줄 번호와 다를 수 있습니다.
+ */
+export function importCreditsCsv(text, { items, existing = [], limit = CONSTANTS.limits.credits } = {}) {
+  const fail = (fatal) => ({ ok: false, fatal, total: 0, credits: [], errors: [], skipped: [] });
+  if (typeof text !== 'string' || !text.trim()) return fail('파일 내용이 비어 있습니다.');
+  if (text.length > CSV_LIMITS.maxBytes) return fail('파일이 1MB보다 큽니다.');
+  let rows;
+  try {
+    rows = parseCsv(text);
+  } catch (e) {
+    return fail(e.message);
+  }
+  if (!rows.length) return fail('읽을 행이 없습니다.');
+  const header = rows[0].map((h) => h.trim());
+  const col = Object.fromEntries(CREDIT_CSV_HEADER.map((h) => [h, header.indexOf(h)]));
+  const missing = CSV_REQUIRED.filter((h) => col[h] < 0);
+  if (missing.length) return fail(`필수 열이 없습니다: ${missing.join(', ')}. 학점 기록 CSV 내보내기 형식을 확인하세요.`);
+  const data = rows.slice(1);
+  if (data.length > CSV_LIMITS.maxRows) return fail(`한 번에 ${CSV_LIMITS.maxRows}행까지 가져올 수 있습니다.`);
+
+  const byName = new Map();
+  for (const it of items) {
+    const k = it.name.trim();
+    if (!byName.has(k)) byName.set(k, []);
+    byName.get(k).push(it);
+  }
+  const keyOf = (c) => [c.itemId, c.date, c.hours, c.course, c.provider].join('\u0001');
+  const seen = new Set(existing.map(keyOf));
+  let capacity = limit - existing.length;
+
+  const credits = [];
+  const errors = [];
+  const skipped = [];
+  data.forEach((r, k) => {
+    const row = k + 2;
+    const get = (name) => (col[name] >= 0 ? unescapeCsvCell(String(r[col[name]] ?? '')) : '');
+    const name = get('자격명').trim();
+    const hits = byName.get(name) || [];
+    if (!name) { errors.push({ row, message: '자격명이 비어 있습니다.' }); return; }
+    if (hits.length === 0) { errors.push({ row, message: `등록되지 않은 자격명입니다: ${name.slice(0, 30)}` }); return; }
+    if (hits.length > 1) { errors.push({ row, message: `같은 이름의 자격이 ${hits.length}개 있어 어느 항목인지 정할 수 없습니다: ${name.slice(0, 30)}` }); return; }
+    let c;
+    try {
+      c = normalizeCredit({
+        itemId: hits[0].id,
+        date: get('날짜').trim(),
+        hours: get('이수시간').trim(),
+        course: get('과정명'),
+        provider: get('제공기관'),
+        category: get('분류'),
+        memo: get('메모'),
+      });
+    } catch (e) {
+      if (!(e instanceof ValidationError)) throw e;
+      errors.push({ row, message: e.message });
+      return;
+    }
+    const key = keyOf(c);
+    if (seen.has(key)) { skipped.push({ row, message: '이미 있는 기록과 같아 건너뜀' }); return; }
+    if (capacity <= 0) { errors.push({ row, message: `학점 기록은 최대 ${limit}건까지 가져올 수 있습니다.` }); return; }
+    seen.add(key);
+    capacity -= 1;
+    credits.push(c);
+  });
+  return { ok: true, fatal: null, total: data.length, credits, errors, skipped };
+}
+
+/* ------------------------------------------------------------------ *
  * 입력 정규화 / 검증 (폼 입력과 백업 가져오기에 공통 사용)
  * ------------------------------------------------------------------ */
 export class ValidationError extends Error {}

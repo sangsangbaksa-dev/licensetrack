@@ -13,6 +13,7 @@ import {
   heatLevel, dayOfWeek, deadlinesInYear, yearHeatmap,
   LEAD_PRESETS, leadPresetId, upcomingAlerts,
   duplicateReason, duplicatesFor, findDuplicateGroups,
+  parseCsv, unescapeCsvCell, importCreditsCsv, CSV_LIMITS,
 } from '../logic.js';
 import {
   monthsAvailable, anonymizeForAi, buildPrompt, parsePlanReply,
@@ -765,5 +766,99 @@ describe('중복 의심 자격', () => {
     const items = [lic('a', '가'), lic('b', '가'), lic('c', '나'), lic('d', '나 ')];
     const groups = findDuplicateGroups(items).map((g) => g.ids.join(''));
     assert.deepEqual(groups, ['ab', 'cd']);
+  });
+});
+
+describe('학점 CSV 가져오기 (행별 오류)', () => {
+  const items = [
+    normalizeItem({ id: 'nur', name: '간호사 면허', expiresOn: '2027-12-31', cycleYears: 3, requiredCredits: 8 }),
+    normalizeItem({ id: 'saf', name: '안전관리자', expiresOn: '2027-12-31', cycleYears: 2, requiredCredits: 24 }),
+  ];
+  const HEAD = '자격명,날짜,이수시간,과정명,제공기관,분류,메모';
+
+  test('파서: 따옴표 안의 쉼표·줄바꿈, "" 이스케이프, CRLF, BOM, 빈 줄 제거', () => {
+    const rows = parseCsv('﻿a,"b,c","d\r\ne","say ""hi"""\r\n\r\n1,2,3,4\n');
+    assert.deepEqual(rows, [['a', 'b,c', 'd\r\ne', 'say "hi"'], ['1', '2', '3', '4']]);
+    assert.throws(() => parseCsv('a,"unclosed'), ValidationError);
+  });
+
+  test('수식 주입 방지로 붙은 앞 따옴표만 되돌리고, 나머지는 그대로', () => {
+    assert.equal(unescapeCsvCell("'=1+1"), '=1+1');
+    assert.equal(unescapeCsvCell("'-5"), '-5');
+    assert.equal(unescapeCsvCell("'abc"), "'abc");
+    assert.equal(unescapeCsvCell('plain'), 'plain');
+  });
+
+  test('내보낸 CSV 를 다시 가져오면 값이 그대로 돌아옴 (왕복, 쉼표·따옴표·수식 형태 메모 포함)', () => {
+    const credits = [
+      normalizeCredit({ id: 'c1', itemId: 'nur', date: '2026-03-01', hours: 2.5, course: '감염, 관리 "기초"', provider: '기관', category: '법정', memo: '=HYPERLINK("x")' }),
+      normalizeCredit({ id: 'c2', itemId: 'saf', date: '2026-04-10', hours: 6, course: '직무', provider: '', category: '직무', memo: '-메모' }),
+    ];
+    const r = importCreditsCsv(buildCreditsCsv(items, credits), { items });
+    assert.equal(r.ok, true, r.fatal);
+    assert.equal(r.errors.length, 0);
+    assert.equal(r.credits.length, 2);
+    assert.deepEqual(r.credits.map((c) => [c.itemId, c.date, c.hours, c.course, c.category, c.memo]), [
+      ['nur', '2026-03-01', 2.5, '감염, 관리 "기초"', '법정', '=HYPERLINK("x")'],
+      ['saf', '2026-04-10', 6, '직무', '직무', '-메모'],
+    ]);
+  });
+
+  test('필수 열이 없으면 파일 전체를 거부', () => {
+    const r = importCreditsCsv('자격명,날짜\n간호사 면허,2026-03-01\n', { items });
+    assert.equal(r.ok, false);
+    assert.match(r.fatal, /이수시간/);
+  });
+
+  test('행마다 오류를 따로 보고하고, 정상 행은 그대로 가져옴', () => {
+    const text = [
+      HEAD,
+      '간호사 면허,2026-03-01,2,교육,,법정,',           // 2행 정상
+      '없는 자격,2026-03-01,2,,,,',                    // 3행 등록되지 않음
+      '간호사 면허,2026-02-30,2,,,,',                  // 4행 존재하지 않는 날짜
+      '안전관리자,2026-03-02,0,,,,',                   // 5행 시간 0
+      ',2026-03-02,1,,,,',                             // 6행 자격명 없음
+      '안전관리자,2026-03-03,1.5,,,,',                 // 7행 정상
+    ].join('\n');
+    const r = importCreditsCsv(text, { items });
+    assert.equal(r.ok, true);
+    assert.equal(r.total, 6);
+    assert.deepEqual(r.errors.map((e) => e.row), [3, 4, 5, 6]);
+    assert.match(r.errors[0].message, /등록되지 않은 자격명/);
+    assert.match(r.errors[1].message, /실제 존재/);
+    assert.match(r.errors[2].message, /이수 시간/);
+    assert.deepEqual(r.credits.map((c) => [c.itemId, c.date, c.hours]), [
+      ['nur', '2026-03-01', 2],
+      ['saf', '2026-03-03', 1.5],
+    ]);
+  });
+
+  test('같은 이름의 자격이 둘이면 행을 가져오지 않고 오류', () => {
+    const dup = [...items, normalizeItem({ id: 'nur2', name: '간호사 면허', expiresOn: '2027-12-31', cycleYears: 3 })];
+    const r = importCreditsCsv(`${HEAD}\n간호사 면허,2026-03-01,2,,,,\n`, { items: dup });
+    assert.equal(r.credits.length, 0);
+    assert.match(r.errors[0].message, /같은 이름/);
+  });
+
+  test('이미 있는 기록과 같은 행, 파일 안에서 반복된 행은 건너뜀 (오류 아님)', () => {
+    const existing = [normalizeCredit({ id: 'e', itemId: 'nur', date: '2026-03-01', hours: 2, course: '교육' })];
+    const text = `${HEAD}\n간호사 면허,2026-03-01,2,교육,,,\n간호사 면허,2026-03-05,1,,,,\n간호사 면허,2026-03-05,1,,,,\n`;
+    const r = importCreditsCsv(text, { items, existing });
+    assert.equal(r.errors.length, 0);
+    assert.deepEqual(r.skipped.map((s) => s.row), [2, 4]);
+    assert.equal(r.credits.length, 1);
+  });
+
+  test('학점 기록 한도를 넘는 행은 오류로 보고', () => {
+    const text = `${HEAD}\n안전관리자,2026-03-01,1,,,,\n안전관리자,2026-03-02,1,,,,\n`;
+    const r = importCreditsCsv(text, { items, limit: 1 });
+    assert.equal(r.credits.length, 1);
+    assert.equal(r.errors.length, 1);
+    assert.match(r.errors[0].message, /최대 1건/);
+  });
+
+  test('빈 파일과 과도하게 큰 파일은 거부', () => {
+    assert.equal(importCreditsCsv('   ', { items }).ok, false);
+    assert.equal(importCreditsCsv(`${HEAD}\n${'a'.repeat(CSV_LIMITS.maxBytes + 1)}`, { items }).ok, false);
   });
 });

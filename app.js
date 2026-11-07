@@ -6,6 +6,7 @@ import {
   templatesWithOverrides, setTemplateOverride, resetTemplateOverride,
   holderOf, holderGroups, holderSummary, yearHeatmap,
   LEAD_PRESETS, leadPresetId, upcomingAlerts, duplicatesFor, findDuplicateGroups,
+  importCreditsCsv, CSV_LIMITS,
 } from './logic.js';
 import {
   AI_LIMITS, planEligibility, anonymizeForAi, buildPrompt, parsePlanReply, fallbackPlan,
@@ -24,6 +25,7 @@ const state = {
   templates: {},
   creditItemId: null,
   holderFilter: null, // null = 전체, '' = 미지정, 그 밖 = 보유자 이름
+  csvPending: null, // 미리보기로 검증된 가져오기 대기 행
   heatYear: new Date().getFullYear(),
   plan: null,
   storageOk: true,
@@ -801,6 +803,59 @@ function onCsvClick() {
   download(`licensetrack-credits-${todayStr()}.csv`, 'text/csv;charset=utf-8', buildCreditsCsv(state.items, state.credits));
 }
 
+function resetCsvImport() {
+  state.csvPending = null;
+  $('#csv-result').replaceChildren();
+  $('#csv-commit').hidden = true;
+}
+
+async function onCsvFileChange(e) {
+  resetCsvImport();
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
+  const box = $('#csv-result');
+  const fail = (msg) => {
+    box.replaceChildren(el('p', { class: 'form-error', text: msg }));
+    e.target.value = '';
+  };
+  if (file.size > CSV_LIMITS.maxBytes) { fail('파일이 1MB보다 큽니다.'); return; }
+  if (!state.items.length) { fail('먼저 자격을 등록하세요. 자격명이 맞아야 기록을 넣을 수 있습니다.'); return; }
+  let text;
+  try {
+    text = await file.text();
+  } catch {
+    fail('파일을 읽을 수 없습니다.');
+    return;
+  }
+  const r = importCreditsCsv(text, { items: state.items, existing: state.credits });
+  if (!r.ok) { fail(r.fatal); return; }
+  state.csvPending = r.credits;
+  const shown = r.errors.slice(0, 100);
+  box.replaceChildren(
+    el('p', { text: `${r.total}행을 읽었습니다. 가져올 수 있는 행 ${r.credits.length}개, 오류 ${r.errors.length}개, 같은 기록이 있어 건너뜀 ${r.skipped.length}개.` }),
+    r.errors.length ? el('details', { class: 'csv-errors' },
+      el('summary', { text: `오류 행 보기 (${r.errors.length}개)` }),
+      el('ul', { class: 'bullets' }, shown.map((x) => el('li', { text: `${x.row}행: ${x.message}` }))),
+      r.errors.length > shown.length ? el('p', { class: 'muted small', text: `${r.errors.length - shown.length}개는 생략했습니다.` }) : null) : null);
+  const commit = $('#csv-commit');
+  commit.textContent = `정상 ${r.credits.length}행 가져오기`;
+  commit.hidden = r.credits.length === 0;
+}
+
+function onCsvCommit() {
+  const add = state.csvPending || [];
+  if (!add.length) return;
+  state.credits = [...state.credits, ...add];
+  saveState();
+  const n = add.length;
+  resetCsvImport();
+  $('#csv-file').value = '';
+  $('#csv-result').replaceChildren(el('p', { text: `${n}건을 가져왔습니다.` }));
+  renderCredits();
+  renderDashboard();
+  toast(`학점 기록 ${n}건을 가져왔습니다.`);
+}
+
 async function onImportChange(e) {
   const file = e.target.files && e.target.files[0];
   const msg = $('#import-msg');
@@ -1080,6 +1135,8 @@ function init() {
     renderCredits();
   });
   $('#csv-btn').addEventListener('click', onCsvClick);
+  $('#csv-file').addEventListener('change', onCsvFileChange);
+  $('#csv-commit').addEventListener('click', onCsvCommit);
   $('#heat-prev').addEventListener('click', () => { state.heatYear -= 1; renderHeatmap(); });
   $('#heat-next').addEventListener('click', () => { state.heatYear += 1; renderHeatmap(); });
   $('#holder-filter').addEventListener('change', (e) => {
