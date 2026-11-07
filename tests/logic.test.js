@@ -12,6 +12,7 @@ import {
   holderOf, holderGroups, filterRowsByHolder, holderSummary,
   heatLevel, dayOfWeek, deadlinesInYear, yearHeatmap,
   LEAD_PRESETS, leadPresetId, upcomingAlerts,
+  duplicateReason, duplicatesFor, findDuplicateGroups,
 } from '../logic.js';
 import {
   monthsAvailable, anonymizeForAi, buildPrompt, parsePlanReply,
@@ -718,5 +719,51 @@ describe('알림 프리셋과 예정 알림', () => {
     ], [], today).rows;
     const same = upcomingAlerts(tie, [14, 7], today).filter((x) => x.alertOn === '2026-11-06');
     assert.deepEqual(same.map((x) => [x.name, x.lead]), [['X', 14], ['Y', 7]]);
+  });
+});
+
+describe('중복 의심 자격', () => {
+  const lic = (id, name, number = '', over = {}) => normalizeItem({
+    id, name, number, expiresOn: '2027-06-30', cycleYears: 0, ...over,
+  });
+
+  test('이름은 공백·대소문자·"(예시)" 표기를 무시하고 비교', () => {
+    assert.equal(duplicateReason(lic('a', '간호사 면허 (예시)'), lic('b', '간호사면허')), 'name');
+    assert.equal(duplicateReason(lic('a', 'ABC Cert'), lic('b', 'abc cert')), 'name');
+    assert.equal(duplicateReason(lic('a', '안전관리자'), lic('b', '산업안전 관리자')), null);
+  });
+
+  test('자격 번호는 하이픈과 공백을 무시하고 비교, 번호가 비어 있으면 같다고 보지 않음', () => {
+    assert.equal(duplicateReason(lic('a', '가', '12-34 56'), lic('b', '나', '123456')), 'number');
+    assert.equal(duplicateReason(lic('a', '가', ''), lic('b', '나', '')), null);
+    assert.equal(duplicateReason(lic('a', '가', 'x1'), lic('b', '가', 'x2')), 'name');
+    assert.equal(duplicateReason(lic('a', '가', '99'), lic('b', '가', '99')), 'both');
+  });
+
+  test('후보 검사는 자기 자신(같은 ID)을 제외', () => {
+    const items = [lic('a', '간호사 면허'), lic('b', '간호사 면허 (예시)')];
+    const cand = lic('a', '간호사 면허');
+    const hits = duplicatesFor(cand, items);
+    assert.deepEqual(hits.map((h) => [h.item.id, h.reason]), [['b', 'name']]);
+  });
+
+  test('전체 묶음: 이름으로 이어진 항목과 번호로 이어진 항목이 한 묶음이 됨, 단독 항목은 제외', () => {
+    const items = [
+      lic('a', '간호사 면허', ''),
+      lic('b', '간호사면허', '77-1'),
+      lic('c', '다른 자격', '771'),
+      lic('d', '단독', ''),
+    ];
+    const groups = findDuplicateGroups(items);
+    assert.equal(groups.length, 1);
+    assert.deepEqual(groups[0].ids, ['a', 'b', 'c']);
+    assert.deepEqual(groups[0].reasons, ['name', 'number']);
+    assert.equal(findDuplicateGroups([lic('x', '가'), lic('y', '나')]).length, 0);
+  });
+
+  test('묶음이 둘이면 둘로 나뉨', () => {
+    const items = [lic('a', '가'), lic('b', '가'), lic('c', '나'), lic('d', '나 ')];
+    const groups = findDuplicateGroups(items).map((g) => g.ids.join(''));
+    assert.deepEqual(groups, ['ab', 'cd']);
   });
 });

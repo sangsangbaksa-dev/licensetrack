@@ -797,6 +797,82 @@ export function validateBackup(raw) {
 }
 
 /* ------------------------------------------------------------------ *
+ * 중복 의심 자격: 이름(공백·대소문자·"(예시)" 표기 무시) 또는 자격 번호(하이픈·공백 무시)가 같으면 의심
+ * ------------------------------------------------------------------ */
+export function normalizeLicenseName(s) {
+  return String(s ?? '').normalize('NFC')
+    .replace(/\(예시\)/g, '')
+    .replace(/[\s\-·.,()[\]]/g, '')
+    .toLowerCase();
+}
+
+export function normalizeLicenseNumber(s) {
+  return String(s ?? '').replace(/[\s-]/g, '').toUpperCase();
+}
+
+/** 두 항목의 중복 이유: 'both' | 'name' | 'number' | null */
+export function duplicateReason(a, b) {
+  const na = normalizeLicenseName(a.name);
+  const sameName = na !== '' && na === normalizeLicenseName(b.name);
+  const ca = normalizeLicenseNumber(a.number);
+  const sameNumber = ca !== '' && ca === normalizeLicenseNumber(b.number);
+  if (sameName && sameNumber) return 'both';
+  if (sameNumber) return 'number';
+  if (sameName) return 'name';
+  return null;
+}
+
+/** 후보 항목과 기존 항목(같은 ID 제외)의 중복 의심 목록 */
+export function duplicatesFor(candidate, items) {
+  const out = [];
+  for (const x of items) {
+    if (x.id === candidate.id) continue;
+    const reason = duplicateReason(candidate, x);
+    if (reason) out.push({ item: x, reason });
+  }
+  return out;
+}
+
+/** 전체 목록에서 중복 의심 묶음(서로 연결된 항목끼리 한 묶음). 두 항목 이상만 반환 */
+export function findDuplicateGroups(items) {
+  const parent = items.map((_, i) => i);
+  const find = (i) => {
+    while (parent[i] !== i) { parent[i] = parent[parent[i]]; i = parent[i]; }
+    return i;
+  };
+  const linked = new Set();
+  for (let i = 0; i < items.length; i++) {
+    for (let j = i + 1; j < items.length; j++) {
+      if (!duplicateReason(items[i], items[j])) continue;
+      parent[find(j)] = find(i);
+      linked.add(i);
+      linked.add(j);
+    }
+  }
+  const byRoot = new Map();
+  for (const i of linked) {
+    const root = find(i);
+    if (!byRoot.has(root)) byRoot.set(root, []);
+    byRoot.get(root).push(i);
+  }
+  const groups = [];
+  for (const members of byRoot.values()) {
+    members.sort((a, b) => a - b);
+    const rs = new Set();
+    for (let a = 0; a < members.length; a++) {
+      for (let b = a + 1; b < members.length; b++) {
+        const r = duplicateReason(items[members[a]], items[members[b]]);
+        if (r) rs.add(r);
+      }
+    }
+    const kinds = rs.has('both') || (rs.has('name') && rs.has('number')) ? ['name', 'number']
+      : rs.has('number') ? ['number'] : ['name'];
+    groups.push({ ids: members.map((i) => items[i].id), names: members.map((i) => items[i].name), reasons: kinds });
+  }
+  return groups;
+}
+
+/* ------------------------------------------------------------------ *
  * 요약 인쇄용 데이터
  * ------------------------------------------------------------------ */
 export function buildPrintRows(items, credits, today) {

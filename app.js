@@ -5,7 +5,7 @@ import {
   buildBackup, validateBackup, buildCreditsCsv, buildPrintRows, newId, ValidationError,
   templatesWithOverrides, setTemplateOverride, resetTemplateOverride,
   holderOf, holderGroups, holderSummary, yearHeatmap,
-  LEAD_PRESETS, leadPresetId, upcomingAlerts,
+  LEAD_PRESETS, leadPresetId, upcomingAlerts, duplicatesFor, findDuplicateGroups,
 } from './logic.js';
 import {
   AI_LIMITS, planEligibility, anonymizeForAi, buildPrompt, parsePlanReply, fallbackPlan,
@@ -506,7 +506,22 @@ function startEditItem(id) {
   $('#item-form').scrollIntoView({ block: 'start' });
 }
 
+const REASON_LABEL = { name: '이름', number: '자격 번호' };
+
+function renderDuplicateBanner() {
+  const groups = findDuplicateGroups(state.items);
+  const b = $('#dup-banner');
+  b.hidden = groups.length === 0;
+  b.replaceChildren(...(groups.length ? [
+    el('strong', { text: `중복 의심 자격 ${groups.length}묶음` }),
+    el('ul', { class: 'bullets' }, groups.map((g) => el('li', {
+      text: `${g.names.join(' / ')} (${g.reasons.map((r) => REASON_LABEL[r]).join(', ')} 같음). 같은 자격이면 하나만 남기세요.`,
+    }))),
+  ] : []));
+}
+
 function renderItemAdmin() {
+  renderDuplicateBanner();
   const list = $('#item-admin');
   if (!state.items.length) {
     list.replaceChildren(el('li', { class: 'muted', text: '등록된 자격이 없습니다.' }));
@@ -552,6 +567,10 @@ function onItemSubmit(e) {
     const input = readItemForm();
     if (existing) input.createdAt = existing.createdAt;
     const item = normalizeItem(input);
+    const dups = duplicatesFor(item, state.items);
+    if (dups.length && !confirm(`비슷한 자격이 이미 있습니다: ${dups.map((d) => d.item.name).join(', ')}. 그래도 저장할까요?`)) {
+      return;
+    }
     if (existing) {
       state.items = state.items.map((x) => (x.id === item.id ? item : x));
     } else {
