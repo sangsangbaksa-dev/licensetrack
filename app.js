@@ -952,7 +952,18 @@ function onResetClick() {
 }
 
 /* ---------- AI 계획 ---------- */
+/** 버튼을 누르면 보낼 문장을 그대로 보여 줌 (같은 함수로 만들므로 실제 전송문과 같음) */
+function renderAiPayloadPreview() {
+  const today = todayStr();
+  const elig = planEligibility(buildDashboard(state.items, state.credits, today).rows, today);
+  const payload = anonymizeForAi(elig.items);
+  $('#ai-payload').textContent = payload.items.length
+    ? buildPrompt(payload)
+    : '지금은 AI로 보낼 항목이 없습니다. 로컬 계획만 만들어집니다.';
+}
+
 function renderAiKeyStatus() {
+  renderAiPayloadPreview();
   const key = getAiKey();
   $('#key-status').textContent = key
     ? `키가 이 브라우저에 저장되어 있습니다 (끝 4자리 …${key.slice(-4)}).`

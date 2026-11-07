@@ -434,7 +434,11 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-sp
 /* CSV 가져오기 */
 .csv-errors summary { cursor: pointer; font-weight: 600; min-height: 44px; display: flex; align-items: center; }
 
-.tabs-note { color: var(--muted); }
+.payload {
+  margin: .4rem 0 0; padding: .75rem; background: var(--surface-2); border: 1px solid var(--line);
+  border-radius: .6rem; font: .82rem/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  white-space: pre-wrap; overflow-wrap: anywhere; max-width: 100%; overflow-x: auto;
+}
 
 .toast {
   position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%); z-index: 60;
