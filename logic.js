@@ -1000,6 +1000,36 @@ export function findDuplicateGroups(items) {
 /* ------------------------------------------------------------------ *
  * 요약 인쇄용 데이터
  * ------------------------------------------------------------------ */
+
+/**
+ * 자격별 증명 요약 (인쇄용). 이번 주기 기간 안의 기록만 줄로 넣습니다.
+ * 자격 번호와 메모는 넣지 않습니다 (인쇄물에 남기지 않는 것이 기본).
+ */
+export function buildCertificates(items, credits, today) {
+  return buildDashboard(items, credits, today).rows.map((r) => {
+    const c = r.cycle;
+    const start = c ? c.start : (r.item.issuedOn || null);
+    const end = c ? c.end : (r.expiry || null);
+    const lines = credits
+      .filter((x) => x.itemId === r.item.id && (!start || x.date >= start) && (!end || x.date <= end))
+      .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0))
+      .map((x) => ({ date: x.date, hours: x.hours, course: x.course || '-', provider: x.provider || '-', category: x.category || '-' }));
+    return {
+      name: r.item.name,
+      holder: holderOf(r.item),
+      issuer: r.item.issuer || '-',
+      expiry: r.expiry || '-',
+      cycleStart: start || '-',
+      cycleEnd: end || '-',
+      required: c ? c.required : null,
+      carry: c ? c.carry : 0,
+      total: c ? c.total : null,
+      status: c ? c.status : 'no-req',
+      lines,
+      lineHours: round2(lines.reduce((s, x) => s + x.hours, 0)),
+    };
+  });
+}
 export function buildPrintRows(items, credits, today) {
   return buildDashboard(items, credits, today).rows.map((r) => ({
     name: r.item.name,

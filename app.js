@@ -6,7 +6,7 @@ import {
   templatesWithOverrides, setTemplateOverride, resetTemplateOverride,
   holderOf, holderGroups, holderSummary, yearHeatmap,
   LEAD_PRESETS, leadPresetId, upcomingAlerts, duplicatesFor, findDuplicateGroups,
-  importCreditsCsv, CSV_LIMITS,
+  importCreditsCsv, CSV_LIMITS, buildCertificates,
 } from './logic.js';
 import {
   AI_LIMITS, planEligibility, anonymizeForAi, buildPrompt, parsePlanReply, fallbackPlan,
@@ -900,9 +900,26 @@ async function onImportChange(e) {
   renderPrint();
 }
 
+function renderCertificates(today) {
+  const certs = buildCertificates(state.items, state.credits, today);
+  $('#cert-list').replaceChildren(...certs.map((c) => el('article', { class: 'cert' },
+    el('h3', { text: c.holder ? `${c.name} (${c.holder})` : c.name }),
+    el('p', { class: 'cert-meta', text: `발급 기관 ${c.issuer} · 주기 ${c.cycleStart} ~ ${c.cycleEnd} · 만료 ${c.expiry}` }),
+    el('p', { class: 'cert-meta', text: `필요 ${c.required === null ? '기준 없음' : fmt(c.required)} · 이월 ${fmt(c.carry)} · 이수 합계 ${c.total === null ? '-' : fmt(c.total)} · ${STATUS[c.status] ? STATUS[c.status][0] : '-'}` }),
+    c.lines.length
+      ? el('table', {},
+        el('thead', {}, el('tr', {}, ['이수일', '과정명', '제공 기관', '분류', '시간'].map((h) => el('th', { scope: 'col', text: h })))),
+        el('tbody', {}, c.lines.map((l) => el('tr', {},
+          el('td', { text: l.date }), el('td', { text: l.course }), el('td', { text: l.provider }),
+          el('td', { text: l.category }), el('td', { class: 'num', text: fmt(l.hours) })))))
+      : el('p', { class: 'muted small', text: '이번 주기 안의 이수 기록이 없습니다.' }),
+    c.lines.length ? el('p', { class: 'cert-meta', text: `기록 합계 ${fmt(c.lineHours)}시간` }) : null)));
+}
+
 function renderPrint() {
   const today = todayStr();
   $('#print-meta').textContent = `기준일 ${today} · 학점은 주기 기간 안의 기록만 합산`;
+  renderCertificates(today);
   const rows = buildPrintRows(state.items, state.credits, today);
   $('#print-body').replaceChildren(...(rows.length ? rows : [null]).map((r) => {
     if (!r) return el('tr', {}, el('td', { colspan: '8', text: '등록된 자격이 없습니다.' }));

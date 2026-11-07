@@ -14,6 +14,7 @@ import {
   LEAD_PRESETS, leadPresetId, upcomingAlerts,
   duplicateReason, duplicatesFor, findDuplicateGroups,
   parseCsv, unescapeCsvCell, importCreditsCsv, CSV_LIMITS,
+  buildCertificates,
 } from '../logic.js';
 import {
   monthsAvailable, anonymizeForAi, buildPrompt, parsePlanReply,
@@ -860,5 +861,45 @@ describe('학점 CSV 가져오기 (행별 오류)', () => {
   test('빈 파일과 과도하게 큰 파일은 거부', () => {
     assert.equal(importCreditsCsv('   ', { items }).ok, false);
     assert.equal(importCreditsCsv(`${HEAD}\n${'a'.repeat(CSV_LIMITS.maxBytes + 1)}`, { items }).ok, false);
+  });
+});
+
+describe('증명 요약 (인쇄용)', () => {
+  const today = '2026-11-06';
+
+  test('이번 주기 기록만 줄로 넣고 합계가 이수 학점과 같음 (이전·다음 주기 제외)', () => {
+    const items = [normalizeItem({ id: 'it1', name: '간호', holder: '본인', issuer: '기관', number: 'SECRET-1', expiresOn: '2026-12-31', cycleYears: 3, requiredCredits: 8, notes: '메모비밀' })];
+    const credits = [
+      normalizeCredit({ itemId: 'it1', date: '2023-05-01', hours: 9, course: '이전' }),
+      normalizeCredit({ itemId: 'it1', date: '2025-06-01', hours: 2, course: '후기', provider: '업체', category: '법정' }),
+      normalizeCredit({ itemId: 'it1', date: '2026-03-01', hours: 1.5, course: '중기' }),
+      normalizeCredit({ itemId: 'it1', date: '2027-01-02', hours: 4, course: '다음' }),
+    ];
+    const [c] = buildCertificates(items, credits, today);
+    assert.equal(c.name, '간호');
+    assert.equal(c.holder, '본인');
+    assert.equal(c.cycleStart, '2024-01-01');
+    assert.equal(c.cycleEnd, '2026-12-31');
+    assert.deepEqual(c.lines.map((x) => x.course), ['후기', '중기']);
+    assert.equal(c.lineHours, 3.5);
+    assert.equal(c.lineHours, c.total);
+    assert.equal(c.lines[0].provider, '업체');
+    assert.equal(c.lines[1].provider, '-');
+  });
+
+  test('증명 요약에는 자격 번호와 메모가 들어가지 않음', () => {
+    const items = [normalizeItem({ id: 'it1', name: '간호', number: 'SECRET-1', expiresOn: '2027-01-01', cycleYears: 1, notes: '메모비밀' })];
+    const text = JSON.stringify(buildCertificates(items, [], today));
+    assert.equal(text.includes('SECRET-1'), false);
+    assert.equal(text.includes('메모비밀'), false);
+  });
+
+  test('만료일이 없는 항목은 발급일 이후 기록만 넣음, 학점 기준 없음은 required null', () => {
+    const items = [normalizeItem({ id: 'it1', name: '무기준', issuedOn: '2025-01-01', expiresOn: '2027-01-01' })];
+    const credits = [normalizeCredit({ itemId: 'it1', date: '2024-12-31', hours: 1 }), normalizeCredit({ itemId: 'it1', date: '2025-02-01', hours: 2 })];
+    const [c] = buildCertificates(items, credits, today);
+    assert.equal(c.required, null);
+    assert.equal(c.status, 'no-req');
+    assert.deepEqual(c.lines.map((x) => x.hours), [2]);
   });
 });
