@@ -811,12 +811,12 @@ export function normalizeTemplateOverrides(v) {
     const base = known.get(id);
     if (!base) throw new ValidationError(`알 수 없는 템플릿입니다: ${String(id).slice(0, 20)}`);
     const o = v[id];
-    if (!o || typeof o !== 'object' || Array.isArray(o)) throw new ValidationError(`${base.label}: 값 형식이 올바르지 않습니다.`);
-    const cycleYears = numField(o.cycleYears ?? base.cycleYears, `${base.label} 주기`,
+    if (!o || typeof o !== 'object' || Array.isArray(o)) throw new ValidationError(`${base.name}: 값 형식이 올바르지 않습니다.`);
+    const cycleYears = numField(o.cycleYears ?? base.cycleYears, `${base.name} 갱신 주기(년)`,
       { min: 0, max: CONSTANTS.limits.cycleYears, int: true });
     const rq = 'requiredCredits' in o ? o.requiredCredits : base.requiredCredits;
     const requiredCredits = rq === null || rq === '' ? null
-      : numField(rq, `${base.label} 필요 학점`, { min: 0, max: CONSTANTS.limits.requiredCredits });
+      : numField(rq, `${base.name} 필요 학점`, { min: 0, max: CONSTANTS.limits.requiredCredits });
     if (cycleYears !== base.cycleYears || requiredCredits !== base.requiredCredits) {
       out[id] = { cycleYears, requiredCredits };
     }
