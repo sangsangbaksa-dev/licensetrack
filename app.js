@@ -4,6 +4,7 @@ import {
   cycleStatus, deadlinesForItem, effectiveExpiry, BUCKET_LABEL, BUCKET_ORDER, buildIcs, icsDstamp,
   buildBackup, validateBackup, buildCreditsCsv, buildPrintRows, newId, ValidationError,
   templatesWithOverrides, setTemplateOverride, resetTemplateOverride,
+  holderOf, holderGroups, holderSummary,
 } from './logic.js';
 import {
   AI_LIMITS, planEligibility, anonymizeForAi, buildPrompt, parsePlanReply, fallbackPlan,
@@ -21,6 +22,7 @@ const state = {
   leads: [...CONSTANTS.defaultLeadDays],
   templates: {},
   creditItemId: null,
+  holderFilter: null, // null = 전체, '' = 미지정, 그 밖 = 보유자 이름
   plan: null,
   storageOk: true,
   busy: false,
@@ -176,9 +178,42 @@ function setupTabs() {
 }
 
 /* ---------- 대시보드 ---------- */
+function renderHolderControls() {
+  const groups = holderGroups(state.items);
+  const hasHolders = groups.some((g) => g.holder !== '');
+  $('#holder-bar').hidden = !hasHolders;
+  $('#holder-summary').hidden = !hasHolders;
+  if (state.holderFilter !== null && !groups.some((g) => g.holder === state.holderFilter)) state.holderFilter = null;
+  const sel = $('#holder-filter');
+  sel.replaceChildren(
+    el('option', { value: 'all', text: `전체 (${state.items.length}개)` }),
+    ...groups.map((g) => el('option', { value: `h:${g.holder}`, text: `${g.label} (${g.count}개)` })));
+  sel.value = state.holderFilter === null ? 'all' : `h:${state.holderFilter}`;
+  $('#holder-list').replaceChildren(...groups.filter((g) => g.holder !== '').map((g) => el('option', { value: g.holder })));
+}
+
+function renderHolderSummary(rows) {
+  const list = $('#holder-summary');
+  list.replaceChildren(...holderSummary(rows).map((s) => el('li', {},
+    el('button', {
+      class: 'holder-card',
+      type: 'button',
+      'aria-pressed': state.holderFilter === s.holder ? 'true' : 'false',
+      onclick: () => { state.holderFilter = s.holder; renderDashboard(); },
+    },
+    el('strong', { text: s.label }),
+    el('span', { class: 'meta', text: `자격 ${s.total}개 · 만료 ${s.expired} · 30일 이내 ${s.d30} · 90일 이내 ${s.d90}${s.atRisk ? ` · 기준 미달 예상 ${s.atRisk}` : ''}` }),
+    el('span', { class: 'meta', text: s.next ? `다음 마감 ${s.next.date} · ${s.next.name}` : '오늘 이후 마감 없음' })))));
+}
+
 function renderDashboard() {
   const today = todayStr();
-  const dash = buildDashboard(state.items, state.credits, today);
+  renderHolderControls();
+  const full = buildDashboard(state.items, state.credits, today);
+  const dash = state.holderFilter === null
+    ? full
+    : buildDashboard(state.items.filter((i) => holderOf(i) === state.holderFilter), state.credits, today);
+  renderHolderSummary(full.rows);
   $('#today-label').textContent = `오늘 ${today} 기준으로 계산합니다.`;
 
   $('#counts').replaceChildren(...BUCKET_ORDER.map((b) =>
@@ -250,7 +285,7 @@ function renderItemCard(row) {
     el('div', { class: 'item-head' },
       el('div', { style: 'min-width:0' },
         el('h3', { text: item.name }),
-        el('p', { text: [item.issuer, item.cycleYears ? `${item.cycleYears}년 주기` : ''].filter(Boolean).join(' · ') || '발급 기관 미입력' })),
+        el('p', { text: [holderOf(item), item.issuer, item.cycleYears ? `${item.cycleYears}년 주기` : ''].filter(Boolean).join(' · ') || '발급 기관 미입력' })),
       el('span', { class: `badge b-${bucket}`, text: BUCKET_LABEL[bucket] })),
     el('dl', { class: 'facts' }, facts.map(([k, v, wide]) =>
       el('div', { class: wide ? 'wide' : '' }, el('dt', { text: k }), el('dd', { text: v })))),
@@ -374,6 +409,7 @@ function readItemForm() {
     id: $('#item-id').value || undefined,
     name: v('#f-name'),
     issuer: v('#f-issuer'),
+    holder: v('#f-holder'),
     number: v('#f-number'),
     issuedOn: v('#f-issued'),
     expiresOn: v('#f-expires'),
@@ -401,6 +437,7 @@ function startEditItem(id) {
   $('#item-id').value = it.id;
   $('#f-name').value = it.name;
   $('#f-issuer').value = it.issuer;
+  $('#f-holder').value = it.holder;
   $('#f-number').value = it.number;
   $('#f-issued').value = it.issuedOn;
   $('#f-expires').value = it.expiresOn;
@@ -424,7 +461,7 @@ function renderItemAdmin() {
   list.replaceChildren(...state.items.map((it) => {
     const n = state.credits.filter((c) => c.itemId === it.id).length;
     const exp = effectiveExpiry(it) || '만료일 없음';
-    const meta = [`만료 ${exp}`, it.cycleYears ? `${it.cycleYears}년 주기` : null, it.requiredCredits !== null ? `필요 ${fmt(it.requiredCredits)}` : null, `기록 ${n}건`]
+    const meta = [holderOf(it) ? `보유 ${holderOf(it)}` : null, `만료 ${exp}`, it.cycleYears ? `${it.cycleYears}년 주기` : null, it.requiredCredits !== null ? `필요 ${fmt(it.requiredCredits)}` : null, `기록 ${n}건`]
       .filter(Boolean).join(' · ');
     return el('li', {},
       el('div', { class: 'main' }, el('strong', { text: it.name }), el('p', { class: 'meta', text: meta })),
@@ -713,7 +750,7 @@ function renderPrint() {
     if (!r) return el('tr', {}, el('td', { colspan: '8', text: '등록된 자격이 없습니다.' }));
     const st = STATUS[r.status];
     return el('tr', {},
-      el('td', { text: r.name }),
+      el('td', { text: r.holder ? `${r.name} (${r.holder})` : r.name }),
       el('td', { text: r.issuer || '-' }),
       el('td', { text: r.expiry }),
       el('td', { text: r.daysLeft === null ? '-' : ddayText(r.daysLeft) }),
@@ -940,6 +977,11 @@ function init() {
     renderCredits();
   });
   $('#csv-btn').addEventListener('click', onCsvClick);
+  $('#holder-filter').addEventListener('change', (e) => {
+    const v = e.target.value;
+    state.holderFilter = v === 'all' ? null : v.slice(2);
+    renderDashboard();
+  });
   $('#lead-form').addEventListener('submit', onLeadSubmit);
   $('#ics-btn').addEventListener('click', onIcsClick);
   $('#notify-btn').addEventListener('click', onNotifyClick);

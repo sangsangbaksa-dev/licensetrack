@@ -26,6 +26,7 @@ export const CONSTANTS = {
     course: 200,
     provider: 100,
     category: 40,
+    holder: 40,
     memo: 500,
     hours: 500,
     requiredCredits: 10000,
@@ -235,6 +236,56 @@ export function buildDashboard(items, credits, today) {
     .map((r) => ({ id: r.item.id, name: r.item.name, date: r.expiry, daysLeft: r.daysLeft }))
     .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
   return { rows, counts, timeline };
+}
+
+/* ------------------------------------------------------------------ *
+ * 보유자(가족 구분). 빈 문자열 = 미지정. 필터 값: null = 전체, '' = 미지정, 그 밖 = 이름
+ * ------------------------------------------------------------------ */
+export function holderOf(item) {
+  return typeof item.holder === 'string' ? item.holder.trim() : '';
+}
+
+/** 보유자 이름순, 미지정('')은 맨 뒤 */
+function sortHolderKeys(keys) {
+  const named = keys.filter((k) => k !== '').sort((a, b) => a.localeCompare(b, 'ko'));
+  return keys.includes('') ? [...named, ''] : named;
+}
+
+/** 필터 선택지: 보유자별 항목 수 (항목이 없으면 빈 목록) */
+export function holderGroups(items) {
+  const count = new Map();
+  for (const it of items) {
+    const h = holderOf(it);
+    count.set(h, (count.get(h) || 0) + 1);
+  }
+  return sortHolderKeys([...count.keys()]).map((h) => ({ holder: h, label: h || '보유자 미지정', count: count.get(h) }));
+}
+
+/** 대시보드 행을 보유자로 거름. holder 가 null/undefined 면 전체 */
+export function filterRowsByHolder(rows, holder) {
+  if (holder === null || holder === undefined) return rows;
+  return rows.filter((r) => holderOf(r.item) === holder);
+}
+
+/** 보유자별 요약: 항목 수, 만료·30일·90일 개수, 기준 미달 예상 수, 가장 가까운 미래 마감 */
+export function holderSummary(rows) {
+  const by = new Map();
+  for (const r of rows) {
+    const h = holderOf(r.item);
+    if (!by.has(h)) {
+      by.set(h, { holder: h, label: h || '보유자 미지정', total: 0, expired: 0, d30: 0, d90: 0, atRisk: 0, next: null });
+    }
+    const s = by.get(h);
+    s.total++;
+    if (r.bucket === 'expired') s.expired++;
+    else if (r.bucket === 'd30') s.d30++;
+    else if (r.bucket === 'd90') s.d90++;
+    if (r.cycle && (r.cycle.status === 'at-risk' || r.cycle.status === 'overdue')) s.atRisk++;
+    if (r.expiry && r.daysLeft >= 0 && (!s.next || r.expiry < s.next.date)) {
+      s.next = { date: r.expiry, name: r.item.name };
+    }
+  }
+  return sortHolderKeys([...by.keys()]).map((h) => by.get(h));
 }
 
 /* ------------------------------------------------------------------ *
@@ -457,6 +508,7 @@ export function normalizeItem(input) {
     id: input.id ? idField(input.id) : newId(),
     name: textField(input.name, '자격명', L.name, { required: true }),
     issuer: textField(input.issuer, '발급 기관', L.issuer),
+    holder: textField(input.holder, '보유자', L.holder),
     number: textField(input.number, '자격번호', L.number),
     issuedOn: dateField(input.issuedOn, '발급일'),
     expiresOn: dateField(input.expiresOn, '만료일'),
@@ -628,6 +680,7 @@ export function validateBackup(raw) {
 export function buildPrintRows(items, credits, today) {
   return buildDashboard(items, credits, today).rows.map((r) => ({
     name: r.item.name,
+    holder: holderOf(r.item),
     issuer: r.item.issuer,
     expiry: r.expiry || '-',
     daysLeft: r.daysLeft,

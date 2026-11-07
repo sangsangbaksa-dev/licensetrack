@@ -9,6 +9,7 @@ import {
   normalizeItem, normalizeCredit, ValidationError,
   buildBackup, validateBackup, buildPrintRows,
   normalizeTemplateOverrides, templatesWithOverrides, setTemplateOverride, resetTemplateOverride,
+  holderOf, holderGroups, filterRowsByHolder, holderSummary,
 } from '../logic.js';
 import {
   monthsAvailable, anonymizeForAi, buildPrompt, parsePlanReply,
@@ -539,5 +540,65 @@ describe('예시 템플릿 편집', () => {
     const r = validateBackup(raw);
     assert.equal(r.ok, true);
     assert.deepEqual(r.data.templates, {});
+  });
+});
+
+describe('보유자(가족) 구분', () => {
+  const today = '2026-11-06';
+  const mk = (id, name, holder, over = {}) => normalizeItem({
+    id, name, holder, expiresOn: '2027-06-30', cycleYears: 3, requiredCredits: 10, ...over,
+  });
+
+  test('보유자 입력은 앞뒤 공백을 자르고 40자 이하, 없으면 빈 문자열', () => {
+    assert.equal(normalizeItem({ name: '가', expiresOn: '2027-01-01', holder: '  엄마  ' }).holder, '엄마');
+    assert.equal(normalizeItem({ name: '가', expiresOn: '2027-01-01' }).holder, '');
+    assert.throws(() => normalizeItem({ name: '가', expiresOn: '2027-01-01', holder: 'x'.repeat(41) }), ValidationError);
+    assert.equal(holderOf({ holder: undefined }), '');
+  });
+
+  test('선택지: 이름순, 미지정은 맨 뒤, 항목 수 집계', () => {
+    const items = [mk('a', 'A', '아들'), mk('b', 'B', ''), mk('c', 'C', '엄마'), mk('d', 'D', '아들')];
+    const g = holderGroups(items);
+    assert.deepEqual(g.map((x) => x.holder), ['아들', '엄마', '']);
+    assert.deepEqual(g.map((x) => x.count), [2, 1, 1]);
+    assert.equal(g[2].label, '보유자 미지정');
+  });
+
+  test('필터: null 은 전체, 빈 문자열은 미지정, 이름은 해당 보유자만', () => {
+    const rows = buildDashboard([mk('a', 'A', '아들'), mk('b', 'B', ''), mk('c', 'C', '엄마')], [], today).rows;
+    assert.equal(filterRowsByHolder(rows, null).length, 3);
+    assert.deepEqual(filterRowsByHolder(rows, '').map((r) => r.item.id), ['b']);
+    assert.deepEqual(filterRowsByHolder(rows, '엄마').map((r) => r.item.id), ['c']);
+  });
+
+  test('보유자별 요약: 버킷 개수, 기준 미달 예상, 가장 가까운 미래 마감', () => {
+    const items = [
+      mk('a', 'A', '엄마', { expiresOn: '2026-11-20' }), // 30일 이내
+      mk('b', 'B', '엄마', { expiresOn: '2026-10-01' }), // 만료
+      mk('c', 'C', '아들', { expiresOn: '2027-06-30', requiredCredits: 100 }), // 예상 부족
+    ];
+    const credits = [normalizeCredit({ itemId: 'c', date: '2026-01-10', hours: 1 })];
+    const rows = buildDashboard(items, credits, today).rows;
+    const s = holderSummary(rows);
+    assert.deepEqual(s.map((x) => x.holder), ['아들', '엄마']);
+    const mom = s[1];
+    assert.equal(mom.total, 2);
+    assert.equal(mom.expired, 1);
+    assert.equal(mom.d30, 1);
+    assert.deepEqual(mom.next, { date: '2026-11-20', name: 'A' });
+    assert.equal(s[0].atRisk, 1);
+  });
+
+  test('AI 페이로드에 보유자 이름이 들어가지 않음', () => {
+    const items = [mk('a', 'A', '비밀보유자', { expiresOn: '2027-06-30', requiredCredits: 20 })];
+    const rows = buildDashboard(items, [], today).rows;
+    const payload = anonymizeForAi(planEligibility(rows, today).items);
+    assert.equal((JSON.stringify(payload) + buildPrompt(payload)).includes('비밀보유자'), false);
+  });
+
+  test('이전 백업(보유자 없음)의 항목은 미지정으로 읽힘', () => {
+    const r = validateBackup({ app: 'licensetrack', schema: 1, items: [{ name: '구형', expiresOn: '2027-01-01' }], credits: [] });
+    assert.equal(r.ok, true, r.errors.join(' | '));
+    assert.equal(holderOf(r.data.items[0]), '');
   });
 });

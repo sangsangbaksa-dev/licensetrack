@@ -101,6 +101,11 @@
         <!-- 대시보드 -->
         <section id="panel-dashboard" class="panel" role="tabpanel" aria-labelledby="tab-dashboard">
           <p class="muted" id="today-label"></p>
+          <div class="holder-bar" id="holder-bar" hidden>
+            <label for="holder-filter">보유자 보기</label>
+            <select id="holder-filter"></select>
+          </div>
+          <ul class="holder-summary" id="holder-summary" hidden aria-label="보유자별 요약"></ul>
           <div id="alert-banner" class="alert" role="status" hidden></div>
           <ul class="counts" id="counts" aria-label="상태별 개수"></ul>
           <div id="item-list" class="cards"></div>
@@ -137,6 +142,12 @@
               <div class="field">
                 <label for="f-issuer">발급 기관</label>
                 <input id="f-issuer" name="issuer" maxlength="100" autocomplete="off">
+              </div>
+              <div class="field">
+                <label for="f-holder">보유자 (가족 구분, 선택)</label>
+                <input id="f-holder" name="holder" maxlength="40" autocomplete="off" list="holder-list" placeholder="예: 본인, 어머니">
+                <datalist id="holder-list"></datalist>
+                <p class="hint">같은 이름을 쓰면 대시보드에서 보유자별로 묶어 볼 수 있습니다.</p>
               </div>
               <div class="field">
                 <label for="f-number">자격 번호 (선택)</label>
